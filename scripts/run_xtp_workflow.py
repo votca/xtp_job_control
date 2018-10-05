@@ -1,6 +1,6 @@
 from toil.common import Toil
 from toil.job import Job
-from xtp_job_control import xtp_workflow
+from xtp_job_control import (send_files_to_storage, xtp_workflow)
 import argparse
 
 
@@ -24,10 +24,12 @@ def cli():
 
 def main():
     options = cli()
+    input_files = ['systemFile', 'tpr', 'gro']
     with Toil(options) as toil:
         # new job
         if not toil.options.restart:
-            toil.start(Job.wrapJobFn(xtp_workflow, options))
+            dict_ids = send_files_to_storage(toil, options, input_files)
+            toil.start(Job.wrapJobFn(xtp_workflow, options, dict_ids))
         # restart
         else:
             pass

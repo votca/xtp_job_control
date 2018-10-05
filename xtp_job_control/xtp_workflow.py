@@ -1,15 +1,16 @@
 from __future__ import (absolute_import, print_function)
 from subprocess import (PIPE, Popen)
-from toil.job import Job
+# from toil.job import Job
+import os
 
 
-
-def xtp_workflow(job, options):
+def xtp_workflow(job, options, dict_ids):
     """
     Workflow to run a complete xtp xssimulation
     """
     job.log("options: {}".format(options))
     setup_environment(job, options)
+    job.log("Dictionary: {}".format(dict_ids))
     # Setup the environment to run the simulation
     # setup(job)
     # STep1
@@ -22,13 +23,20 @@ def setup_environment(job, options):
     """
     Create temporal folder and copy the setting to the temporal folder.
     """
-    input_files = ['systemFile', 'tpr', 'gro']
-    for f in input_files:
-        job.log("key: {} value: {}".format(f, getattr(options, f)))
+    pass
 
-    fileID = job.fileStore.writeGlobalFile(getattr(options, 'systemFile'))
-    job.log("fileID: {}".format(fileID))
-    # return {key: job.fileStore.writeGlobalFile(options[key]) for key in input_files}
+
+def send_files_to_storage(toil, options, input_files):
+    """
+    Import `input_files` into the Storage, using a Toil handler see:
+    https://toil.readthedocs.io/en/latest/developingWorkflows/toilAPIJobstore.html#toil.jobStores.abstractJobStore.AbstractJobStore.importFile
+
+    :returns: Dictionary of file_name: fileID pairs
+    """
+    def create_url(relative_path):
+        return 'file://' + os.path.abspath(relative_path)
+
+    return {key: toil.importFile(create_url(getattr(options, key))) for key in input_files}
 
 
 def call_xtp_cmd(cmd, expected_output=""):
