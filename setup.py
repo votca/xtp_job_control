@@ -12,7 +12,7 @@ setup(
     version='0.0.1',
     description='',
     license='Apache-2.0',
-    url='',
+    url='https://github.com/votca/xtp_job_control',
     author=['Felipe Zapata'],
     author_email='fzapata_esciencecenter.nl',
     keywords='chemistry materials',
@@ -26,12 +26,13 @@ setup(
         'intended audience :: science/research',
         'topic :: scientific/engineering :: chemistry'
     ],
-    install_requires=[
-        'data'],
+    install_requires=['toil'],
     extras_require={
         'test': ['coverage', 'pytest', 'pytest-cov']},
     include_package_data=True,
     package_data={
         'xtp_job_control': ['data/*']
-    }
+    },
+    scripts=[
+        'scripts/run_xtp_workflow.py']
 )
