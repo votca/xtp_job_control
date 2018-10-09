@@ -10,7 +10,10 @@ def cli():
     # Add toil arguments to parsers
 
     parser.add_argument(
-        "--system", help="path to the system description file in xml", default="system.xml")
+        "--votcashare", help="Path to votca share folder", required=True)
+    parser.add_argument(
+        "--system", help="path to the system description file in xml",
+        default="system.xml")
     parser.add_argument(
         "--tpr", help="path to topology file", default="topol.tpr")
     parser.add_argument(
@@ -21,7 +24,7 @@ def cli():
 
     # read command line args
     args = parser.parse_args()
-    opts = ['system', 'tpr', 'gro', 'workdir']
+    opts = ['votcashare', 'system', 'tpr', 'gro', 'workdir']
 
     return {key: getattr(args, key) for key in opts}
 

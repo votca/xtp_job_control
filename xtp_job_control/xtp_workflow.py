@@ -1,10 +1,14 @@
 from .runner import run
 from noodles import schedule
+from os.path import join
 from subprocess import (PIPE, Popen)
 from typing import (Dict, List)
 import logging
 import fnmatch
 import os
+import shutil
+import tempfile
+
 
 # Starting logger
 logger = logging.getLogger(__name__)
@@ -14,8 +18,10 @@ def xtp_workflow(options: Dict):
     """
     Workflow to run a complete xtp ssimulation using `options`.
     """
+    # Setup environment to run xtp
+    options = initial_config(options)
+
     workdir = options['workdir']
-    initial_config()
 
     # Step1
     # runs the mapping from MD coordinates to segments and creates .sql file
@@ -42,7 +48,7 @@ def xtp_workflow(options: Dict):
 
 
 @schedule
-def call_xtp_cmd(cmd, workdir, expected_output=None):
+def call_xtp_cmd(cmd: str, workdir: str, expected_output: List=None):
     """
     Run a bash `cmd` in the `cwd` folder and search for a list of `expected_output`
     files.
@@ -82,10 +88,41 @@ def retrieve_ouput(workdir: str, expected_file: str) -> str:
         return rs[0]
 
 
-def initial_config(file_log=None):
+def initial_config(options: Dict) -> Dict:
+    """
+    setup to call xtp tools.
+    """
+    config_logger(options['workdir'])
+    scratch_dir = tempfile.mkdtemp(prefix='xtp_')
+
+    # Option files
+    optionfiles = join(scratch_dir, 'OPTIONFILES')
+    os.mkdir(optionfiles)
+    neighborlist = create_neighborlist(options['votcashare'], optionfiles)
+
+    # merge with user provided options
+    dict_config = {
+        'scratch_dir': scratch_dir, 'optionfiles': options, 'neighborlist': neighborlist}
+    options.update(dict_config)
+
+    return options
+
+
+def create_neighborlist(votcashare_path: str, optionfiles: str) -> str:
+    """
+    create a list of neighbors anf return xml file
+    """
+    neighborlist = join(votcashare_path, 'xtp/xml/neighborlist.xml')
+    shutil.copy(neighborlist, optionfiles)
+
+    return neighborlist
+
+
+def config_logger(workdir: str):
     """
     Setup the logging infrasctucture.
     """
+    file_log = join(workdir, 'xtp.log')
     logging.basicConfig(filename=file_log, level=logging.DEBUG,
                         format='%(levelname)s:%(message)s  %(asctime)s\n',
                         datefmt='%m/%d/%Y %I:%M:%S %p')
