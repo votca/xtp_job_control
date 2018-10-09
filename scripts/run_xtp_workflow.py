@@ -1,6 +1,4 @@
-from toil.common import Toil
-from toil.job import Job
-from xtp_job_control import (send_files_to_storage, xtp_workflow)
+from xtp_job_control import xtp_workflow
 import argparse
 
 
@@ -10,7 +8,6 @@ def cli():
     """
     parser = argparse.ArgumentParser()
     # Add toil arguments to parsers
-    Job.Runner.addToilOptions(parser)
 
     parser.add_argument(
         "--system", help="path to the system description file in xml", default="system.xml")
@@ -19,21 +16,19 @@ def cli():
     parser.add_argument(
         "--gro", help="path to the trajectory file", default="conf.gro")
 
-    return parser.parse_args()
+    parser.add_argument(
+        "--workdir", help=("Work directory"))
+
+    # read command line args
+    args = parser.parse_args()
+    opts = ['system', 'tpr', 'gro', 'workdir']
+
+    return {key: getattr(args, key) for key in opts}
 
 
 def main():
     options = cli()
-    input_files = ['system', 'tpr', 'gro']
-    with Toil(options) as toil:
-        # new job
-        if not toil.options.restart:
-            dict_ids = send_files_to_storage(toil, options, input_files)
-            toil.start(Job.wrapJobFn(xtp_workflow, options, dict_ids))
-        # restart
-        else:
-            pass
-            # toil.restart()
+    xtp_workflow(options)
 
 
 if __name__ == "__main__":

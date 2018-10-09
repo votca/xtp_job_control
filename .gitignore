@@ -44,5 +44,5 @@ coverage.xml
 #emacs
 *~
 
-# toil
-storage
+# xtp
+*.sql

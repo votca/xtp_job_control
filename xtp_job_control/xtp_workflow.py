@@ -1,55 +1,35 @@
-from __future__ import (absolute_import, print_function)
+from noodles import schedule
 from subprocess import (PIPE, Popen)
-# from toil.job import Job
-import os
+from typing import Dict
+from .runner import run
 
 
-def xtp_workflow(job, options, dict_ids):
+def xtp_workflow(options: Dict):
     """
     Workflow to run a complete xtp xssimulation
     """
-    job.log("Dictionary: {}".format(dict_ids))
+    print(options)
 
     # Step1
     # runs the mapping from MD coordinates to segments and creates .sql file
     state = "state.sql"
     cmd = "xtp_map -t {} -c {} -s {} -f {}".format(
-        dict_ids['tpr'], dict_ids['gro'], dict_ids['system'], state)
+        options['tpr'], options['gro'], options['system'], state)
 
-    job.log("command: {}".format(cmd))
-    call_xtp_cmd(job, cmd)
+    print("command: {}".format(cmd))
+    job = call_xtp_cmd(cmd)
 
-
-
-def send_files_to_storage(toil, options, input_files):
-    """
-    Import `input_files` into the Storage, using a Toil handler see:
-    https://toil.readthedocs.io/en/latest/developingWorkflows/toilAPIJobstore.html#toil.jobStores.abstractJobStore.AbstractJobStore.importFile
-
-    :returns: Dictionary of file_name: fileID pairs
-    """
-    def create_url(relative_path):
-        return 'file://' + os.path.abspath(relative_path)
-
-    dict_ids = {}
-    for key in input_files:
-        file_path = getattr(options, key)
-        url = create_url(file_path)
-        toil.importFile(url, sharedFileName="1333333")
-        dict_ids[key] = url
-
-    return dict_ids
-    # return {key: toil.importFile(create_url(getattr(options, key))) for key in input_files}
+    run(job)
 
 
-def call_xtp_cmd(job, cmd, expected_output=None):
+@schedule
+def call_xtp_cmd(cmd, cwd=None, expected_output=None):
     """
     Run a bash command
     """
-    p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
+    p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, cwd=cwd)
     rs = p.communicate()
     err = rs[1]
-    job.log("output: {}".format(err))
     if err:
         return None
         print("Submission Errors: {}".format(err))

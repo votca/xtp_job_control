@@ -1,1 +1,2 @@
-from .xtp_workflow import (send_files_to_storage, xtp_workflow)
+from .xtp_workflow import xtp_workflow
+from .runner import run

@@ -21,12 +21,12 @@ setup(
     classifiers=[
         'License :: OSI Approved :: Apache-2.0 License',
         'Intended Audience :: Science/Research',
-        'programming language :: python :: 2',
+        'programming language :: python :: 3.5',
         'development status :: 4 - Beta',
         'intended audience :: science/research',
         'topic :: scientific/engineering :: chemistry'
     ],
-    install_requires=['toil'],
+    install_requires=['noodles'],
     extras_require={
         'test': ['coverage', 'pytest', 'pytest-cov']},
     include_package_data=True,
