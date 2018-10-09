@@ -13,7 +13,7 @@ def cli():
     Job.Runner.addToilOptions(parser)
 
     parser.add_argument(
-        "--systemFile", help="path to the system description file in xml", default="system.xml")
+        "--system", help="path to the system description file in xml", default="system.xml")
     parser.add_argument(
         "--tpr", help="path to topology file", default="topol.tpr")
     parser.add_argument(
@@ -24,7 +24,7 @@ def cli():
 
 def main():
     options = cli()
-    input_files = ['systemFile', 'tpr', 'gro']
+    input_files = ['system', 'tpr', 'gro']
     with Toil(options) as toil:
         # new job
         if not toil.options.restart:

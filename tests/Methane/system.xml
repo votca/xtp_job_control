@@ -1,3 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE topology [
+  <!ENTITY path "//home/felipe/Workbench/xtp_job_control/tests/Methane">
+]>
 <topology>
 	<molecules>
 		<molecule>
@@ -6,16 +10,16 @@
 			<segments>
 				<segment>
 					<name>Methane</name>
-					<qmcoords>QC_FILES/methane.xyz</qmcoords>
+					<qmcoords>&path;/QC_FILES/methane.xyz</qmcoords>
 					<U_cC_nN_h>1.0000</U_cC_nN_h>
 					<U_nC_nN_h>0.1000</U_nC_nN_h>
 					<U_cN_cC_h>0.2000</U_cN_cC_h>
 					<U_cC_nN_e>1.0000</U_cC_nN_e>
 					<U_nC_nN_e>0.3000</U_nC_nN_e>
 					<U_cN_cC_e>0.4000</U_cN_cC_e>
-					<multipoles_n>MP_FILES/Methane_n.mps</multipoles_n>
-					<multipoles_h>MP_FILES/Methane_h.mps</multipoles_h>
-					<multipoles_e>MP_FILES/Methane_e.mps</multipoles_e>
+					<multipoles_n>&path;MP_FILES/Methane_n.mps</multipoles_n>
+					<multipoles_h>&path;MP_FILES/Methane_h.mps</multipoles_h>
+					<multipoles_e>&path;MP_FILES/Methane_e.mps</multipoles_e>
 					<map2md>0</map2md>
 					<fragments>
 						<fragment>
