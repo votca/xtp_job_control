@@ -10,8 +10,8 @@ def xtp_workflow(job, options, dict_ids):
     """
     job.log("Dictionary: {}".format(dict_ids))
 
-    Step1
-    runs the mapping from MD coordinates to segments and creates .sql file
+    # Step1
+    # runs the mapping from MD coordinates to segments and creates .sql file
     state = "state.sql"
     cmd = "xtp_map -t {} -c {} -s {} -f {}".format(
         dict_ids['tpr'], dict_ids['gro'], dict_ids['system'], state)
