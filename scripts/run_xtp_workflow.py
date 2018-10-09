@@ -17,7 +17,7 @@ def cli():
         "--gro", help="path to the trajectory file", default="conf.gro")
 
     parser.add_argument(
-        "--workdir", help=("Work directory"))
+        "--workdir", help=("Work directory"), default='.')
 
     # read command line args
     args = parser.parse_args()
