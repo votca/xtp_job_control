@@ -11,8 +11,6 @@ def cli():
 
     parser.add_argument(
         "--input", help="Path to the input file (YAML format)", required=True)
-    parser.add_argument(
-        "--workdir", help=("Work directory"), default='.')
 
     # read command line args
     args = parser.parse_args()

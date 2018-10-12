@@ -1,10 +1,8 @@
 from .runner import run
-from noodles import schedule
+from .validate_input import validate_input
 from os.path import join
-from subprocess import (PIPE, Popen)
-from typing import (Dict, List)
+from typing import Dict
 import logging
-import fnmatch
 import os
 import shutil
 import tempfile
@@ -18,77 +16,40 @@ def xtp_workflow(options: Dict):
     """
     Workflow to run a complete xtp ssimulation using `options`.
     """
-    # Setup environment to run xtp
-    options = initial_config(options)
+    # validate_input
+    input_dict = validate_input(options['input'])
 
-    workdir = options['workdir']
+    print(input_dict)
+    # # Setup environment to run xtp
+    # options = initial_config(options)
 
-    # Step1
-    # runs the mapping from MD coordinates to segments and creates .sql file
-    # you can explore the created .sql file with e.g. sqlitebrowser
-    state = "state.sql"
-    cmd_map = "xtp_map -t {} -c {} -s {} -f {}".format(
-        options['tpr'], options['gro'], options['system'], state)
 
-    job_map = call_xtp_cmd(cmd_map, workdir, expected_output={'state': state})
+    # # Step1
+    # # runs the mapping from MD coordinates to segments and creates .sql file
+    # # you can explore the created .sql file with e.g. sqlitebrowser
+    # state = "state.sql"
+    # cmd_map = "xtp_map -t {} -c {} -s {} -f {}".format(
+    #     options['tpr'], options['gro'], options['system'], state)
 
-    # step2
-    # output MD and QM mappings into extract.trajectory_md.pdb and
-    # extract.trajectory_qm.pdb files
+    # job_map = call_xtp_cmd(cmd_map, workdir, expected_output={'state': state})
 
-    cmd_dump = create_promise_command(
-        "xtp_dump -e trajectory2pdb -f {}", job_map, ['state'])
+    # # step2
+    # # output MD and QM mappings into extract.trajectory_md.pdb and
+    # # extract.trajectory_qm.pdb files
 
-    job_dump = call_xtp_cmd(cmd_dump, workdir, expected_output={
-        'md_trajectory': 'extract.trajectory_md.pdb',
-        'qm_trajectory': 'extract.trajectory_qm.pdb'})
+    # cmd_dump = create_promise_command(
+    #     "xtp_dump -e trajectory2pdb -f {}", job_map, ['state'])
 
-    # step3
-    # Change options
+    # job_dump = call_xtp_cmd(cmd_dump, workdir, expected_output={
+    #     'md_trajectory': 'extract.trajectory_md.pdb',
+    #     'qm_trajectory': 'extract.trajectory_qm.pdb'})
+
+    # # step3
+    # # Change options
     
-    output = run(job_dump)
-    print(output)
+    # output = run(job_dump)
+    # print(output)
 
-
-@schedule
-def call_xtp_cmd(cmd: str, workdir: str, expected_output: List=None):
-    """
-    Run a bash `cmd` in the `cwd` folder and search for a list of `expected_output`
-    files.
-    """
-    with Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, cwd=workdir) as p:
-        rs = p.communicate()
-
-    logger.info("running command: {}".format(cmd))
-
-    if expected_output is None:
-        return None
-    else:
-        logger.info("command output: {}".format(rs[0]))
-        logger.error("command error: {}".format(rs[1]))
-        return {key: retrieve_ouput(workdir, file_name) for key, file_name
-                in expected_output.items()}
-
-
-@schedule
-def create_promise_command(template: str, dict_files: Dict, identifiers: List) -> str:
-    """
-    Use a `template` together with the previous result `dict_files`
-    to create a new command line str, using different file `identifiers`.
-    """
-    return template.format(*[dict_files[f] for f in identifiers])
-
-
-def retrieve_ouput(workdir: str, expected_file: str) -> str:
-    """
-    Search for `expected_file` files in the `workdir`.
-    """
-    rs = fnmatch.filter(os.listdir(workdir), expected_file)
-    if len(rs) == 0:
-        msg = "the command failed producing no output files"
-        raise RuntimeError(msg)
-    else:
-        return rs[0]
 
 
 def initial_config(options: Dict) -> Dict:
@@ -101,11 +62,13 @@ def initial_config(options: Dict) -> Dict:
     # Option files
     optionfiles = join(scratch_dir, 'OPTIONFILES')
     os.mkdir(optionfiles)
-    neighborlist = create_neighborlist(options['votcashare'], optionfiles)
 
-    # merge with user provided options
+    # Copy option files to temp file
+    path_votcashare = options['path_votcashare']
+    shutil.copy(join(path_votcashare, 'xtp/xml'), optionfiles)
+
     dict_config = {
-        'scratch_dir': scratch_dir, 'optionfiles': options, 'neighborlist': neighborlist}
+        'scratch_dir': scratch_dir, 'optionfiles': options}
     options.update(dict_config)
 
     return options
@@ -115,7 +78,7 @@ def create_neighborlist(votcashare_path: str, optionfiles: str) -> str:
     """
     create a list of neighbors anf return xml file
     """
-    neighborlist = join(votcashare_path, 'xtp/xml/neighborlist.xml')
+    # neighborlist = join(votcashare_path, 'xtp/xml/neighborlist.xml')
     shutil.copy(neighborlist, optionfiles)
 
     return neighborlist

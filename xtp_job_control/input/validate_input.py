@@ -6,11 +6,11 @@ import yaml
 import pkg_resources as pkg
 
 schema_filters = {
-    'filter': pkg.resource_filename("xtp_job_control", "data/schemas/simulation.json")
+    'simulation': pkg.resource_filename("xtp_job_control", "data/schemas/simulation.json")
     }
 
 
-def validate_input(input_file: str, workflow_name) -> Dict:
+def validate_input(input_file: str, workflow_name: str='simulation') -> Dict:
     """
     Read the input file in YAML format, validate it again the schema
     of `workflow_name` and return a nested dictionary with the input.

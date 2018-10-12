@@ -4,7 +4,7 @@ workflow:
 system:
   "tests/Methane/system.xml"
 
-votcashare:
+path_votcashare:
   "/home/felipe/modules/votca/votca_dev/share/votca"
   
 topology:
@@ -63,7 +63,7 @@ changeoptions:
   xtpdft_pair:
     read_guess: 1
     energy: 1e-2
-    threads:0
+    threads: 0
 
   mbgft_pair:
     ranges: full
@@ -82,8 +82,8 @@ changeoptions:
    cutoff1: 1
    cutoff2: 1.2
 
-   xtpdft_qmmm:
-     threads: 0
+  xtpdft_qmmm:
+    threads: 0
 
   mbgft_qmmm:
     openmp: 0
