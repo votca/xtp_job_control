@@ -43,6 +43,9 @@ def xtp_workflow(options: Dict):
         'md_trajectory': 'extract.trajectory_md.pdb',
         'qm_trajectory': 'extract.trajectory_qm.pdb'})
 
+    # step3
+    # Change options
+    
     output = run(job_dump)
     print(output)
 

@@ -1,0 +1,24 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "description": "Input to run a given workflow",
+    "type": "object",
+    "properties": {
+	"workflow": {
+	    "type": "string",
+	    "defaulft": "simulation",
+	    "description": "Name of the workflow to run"
+	},
+	"changeoptions": {
+	    "type": "object",
+	    "description": "options to change from default templates",
+	    "neighborlist": {
+		"type": "object",
+		"description": "options to change from a neighborlist"
+	    }
+	}
+    },
+    "additionalProperties": false,
+    "required": [
+
+  ]
+}

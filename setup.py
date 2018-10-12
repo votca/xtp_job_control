@@ -26,12 +26,13 @@ setup(
         'intended audience :: science/research',
         'topic :: scientific/engineering :: chemistry'
     ],
-    install_requires=['noodles'],
+    install_requires=[
+        'jsonref', 'jsonschema', 'noodles', 'pyyaml'],
     extras_require={
         'test': ['coverage', 'pytest', 'pytest-cov']},
     include_package_data=True,
     package_data={
-        'xtp_job_control': ['data/*']
+        'xtp_job_control': ['data/schemas/*']
     },
     scripts=[
         'scripts/run_xtp_workflow.py']
