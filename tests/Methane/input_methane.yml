@@ -1,6 +1,18 @@
 workflow:
   simulation
 
+system:
+  "tests/Methane/system.xml"
+
+votcashare:
+  "/home/felipe/modules/votca/votca_dev/share/votca"
+  
+topology:
+  "tests/Methane/MD_FILES/topol.tpr"
+
+trajectory:
+  "tests/Methane/MD_FILES/conf.gro" 
+  
 changeoptions:
   neighborlist:
     constant: 0.6
@@ -48,7 +60,7 @@ changeoptions:
     electron: "Methane:e1"
     hole: "Methane:h1"
 
-  xtpdft_paif:
+  xtpdft_pair:
     read_guess: 1
     energy: 1e-2
     threads:0
