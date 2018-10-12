@@ -1,12 +1,12 @@
 from .runner import run
-from .validate_input import validate_input
+from .input import validate_input
+from distutils.dir_util import copy_tree
 from os.path import join
 from typing import Dict
+import datetime
 import logging
 import os
-import shutil
 import tempfile
-
 
 # Starting logger
 logger = logging.getLogger(__name__)
@@ -17,13 +17,34 @@ def xtp_workflow(options: Dict):
     Workflow to run a complete xtp ssimulation using `options`.
     """
     # validate_input
-    input_dict = validate_input(options['input'])
+    input_dict = validate_input(options['input_file'])
 
-    print(input_dict)
-    # # Setup environment to run xtp
-    # options = initial_config(options)
+    # Merge inputs
+    options.update(input_dict)
+
+    # Setup environment to run xtp
+    options = initial_config(options)
+
+    # Create graph of dependencies
+    create_workflow_simulation(options)
+
+    # return run(wf)
 
 
+def create_workflow_simulation(options: Dict) -> object:
+    """
+    Use the `options` to create a workflow
+    """
+    change_options_files(options['changeoptions'], options['path_optionfiles'])
+
+
+def change_options_files(changeoptions: Dict, path_optionfiles: str) -> None:
+    """
+    Change the temporal optionfiles with the input provided by the user.
+    """
+    
+
+    
     # # Step1
     # # runs the mapping from MD coordinates to segments and creates .sql file
     # # you can explore the created .sql file with e.g. sqlitebrowser
@@ -51,13 +72,14 @@ def xtp_workflow(options: Dict):
     # print(output)
 
 
-
 def initial_config(options: Dict) -> Dict:
     """
     setup to call xtp tools.
     """
     config_logger(options['workdir'])
-    scratch_dir = tempfile.mkdtemp(prefix='xtp_')
+    ts = datetime.datetime.now().timestamp()
+    prefix = 'xtp_' + str(ts)
+    scratch_dir = tempfile.mkdtemp(prefix=prefix)
 
     # Option files
     optionfiles = join(scratch_dir, 'OPTIONFILES')
@@ -65,23 +87,13 @@ def initial_config(options: Dict) -> Dict:
 
     # Copy option files to temp file
     path_votcashare = options['path_votcashare']
-    shutil.copy(join(path_votcashare, 'xtp/xml'), optionfiles)
+    copy_tree(join(path_votcashare, 'xtp/xml'), optionfiles)
 
     dict_config = {
-        'scratch_dir': scratch_dir, 'optionfiles': options}
+        'scratch_dir': scratch_dir, 'path_optionfiles': optionfiles}
     options.update(dict_config)
 
     return options
-
-
-def create_neighborlist(votcashare_path: str, optionfiles: str) -> str:
-    """
-    create a list of neighbors anf return xml file
-    """
-    # neighborlist = join(votcashare_path, 'xtp/xml/neighborlist.xml')
-    shutil.copy(neighborlist, optionfiles)
-
-    return neighborlist
 
 
 def config_logger(workdir: str):

@@ -9,7 +9,7 @@
 	    "description": "Name of the workflow to run"
 	},
 	"path_votcashare": {
-	    "type": "string"
+	    "type": "string",
 	    "description": "path to the VOTCASHARE folder"
 	},
 	"system": {
@@ -77,6 +77,6 @@
 	"system",
 	"topology",
 	"trajectory",
-	"chageoptions"
+	"changeoptions"
   ]
 }

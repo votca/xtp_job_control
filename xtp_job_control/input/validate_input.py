@@ -5,7 +5,7 @@ import jsonref
 import yaml
 import pkg_resources as pkg
 
-schema_filters = {
+schema_simulations = {
     'simulation': pkg.resource_filename("xtp_job_control", "data/schemas/simulation.json")
     }
 
@@ -16,7 +16,7 @@ def validate_input(input_file: str, workflow_name: str='simulation') -> Dict:
     of `workflow_name` and return a nested dictionary with the input.
     """
     input_dict = read_json_yaml(input_file, fmt='yaml')
-    path_schema = schema_filters[workflow_name]
+    path_schema = schema_simulations[workflow_name]
     schema = load_json_schema(path_schema)
 
     return check_input(input_dict, schema)
@@ -58,7 +58,7 @@ def load_json_schema(file_path: str) -> Dict:
     "Load a schema from `file_path` and use the absolute path for file references"
 
     # Absolute path prefix<
-    root = pkg.resource_filename('filterInsilico', 'data')
+    root = pkg.resource_filename('xtp_job_control', 'data')
 
     base_uri = "file://{}/".format(root)
 
