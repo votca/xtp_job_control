@@ -27,7 +27,7 @@ setup(
         'topic :: scientific/engineering :: chemistry'
     ],
     install_requires=[
-        'jsonref', 'jsonschema', 'noodles', 'pyyaml'],
+        'jsonref', 'jsonschema', 'noodles.[numpy]', 'pyyaml'],
     extras_require={
         'test': ['coverage', 'pytest', 'pytest-cov']},
     include_package_data=True,

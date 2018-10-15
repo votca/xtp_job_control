@@ -1,12 +1,15 @@
 from .runner import run
 from .input import validate_input
-from .xml_editor import edit_options
+from .worflow_components import (
+    call_xtp_cmd, create_promise_command, edit_options, merge_promised_dict)
 from distutils.dir_util import copy_tree
+from noodles import gather
 from os.path import join
 from typing import Dict
 import datetime
 import logging
 import os
+import shutil
 import tempfile
 
 # Starting logger
@@ -29,42 +32,61 @@ def xtp_workflow(options: Dict):
     # Create graph of dependencies
     create_workflow_simulation(options)
 
-    # return run(wf)
-
 
 def create_workflow_simulation(options: Dict) -> object:
     """
     Use the `options` to create a workflow
     """
-    edit_options(options['changeoptions'], options['path_optionfiles'])
+    workdir = options['scratch_dir']
+    path_optionfiles = options['path_optionfiles']
+    changeoptions = options['changeoptions']
 
+    # create results object
+    results = options.copy()
+    path_state = join(workdir, "state.sql")
 
+    # Step1
+    # runs the mapping from MD coordinates to segments and creates .sql file
+    # you can explore the created .sql file with e.g. sqlitebrowser
+    # calls something like:
+    # xtp_map -t MD_FILES/topol.tpr -c MD_FILES/conf.gro -s system.xml -f state.sql
+    results['state'] = path_state
+    args = create_promise_command(
+        "xtp_map -t {} -c {} -s {} -f {}", results, ['topology', 'trajectory', 'system', 'state'])
 
-    # # Step1
-    # # runs the mapping from MD coordinates to segments and creates .sql file
-    # # you can explore the created .sql file with e.g. sqlitebrowser
-    # state = "state.sql"
-    # cmd_map = "xtp_map -t {} -c {} -s {} -f {}".format(
-    #     options['tpr'], options['gro'], options['system'], state)
+    job_map = call_xtp_cmd(args, workdir, expected_output={'state': 'state.sql'})
 
-    # job_map = call_xtp_cmd(cmd_map, workdir, expected_output={'state': state})
+    # step2
+    # output MD and QM mappings into extract.trajectory_md.pdb and
+    # extract.trajectory_qm.pdb files
+    results = merge_promised_dict(results, job_map)
+    cmd_dump = create_promise_command(
+        "xtp_dump -e trajectory2pdb -f {}", results, ['state'])
 
-    # # step2
-    # # output MD and QM mappings into extract.trajectory_md.pdb and
-    # # extract.trajectory_qm.pdb files
+    job_dump = call_xtp_cmd(cmd_dump, workdir, expected_output={
+        'md_trajectory': 'extract.trajectory_md.pdb',
+        'qm_trajectory': 'extract.trajectory_qm.pdb'})
 
-    # cmd_dump = create_promise_command(
-    #     "xtp_dump -e trajectory2pdb -f {}", job_map, ['state'])
+    # step3
+    # Change options neighborlist
+    job_change_opts = edit_options(changeoptions, ['neighborlist'], path_optionfiles)
+    results = merge_promised_dict(results, job_dump, job_change_opts)
+    cmd_neighborlist = create_promise_command(
+        "xtp_run -e neighborlist -o {} -f {}", results, ['neighborlist', 'state'])
+    job_neighborlist = call_xtp_cmd(cmd_neighborlist, workdir)
 
-    # job_dump = call_xtp_cmd(cmd_dump, workdir, expected_output={
-    #     'md_trajectory': 'extract.trajectory_md.pdb',
-    #     'qm_trajectory': 'extract.trajectory_qm.pdb'})
+    # step 4
+    # read in reorganization energies stored in system.xml to state.sql
+    einternal_file = join(path_optionfiles, 'einternal.xml')
+    results = merge_promised_dict(results, {'einternal': einternal_file})
+    cmd_einternal = create_promise_command(
+        "xtp_run -e einternal -o {} -f {}", results, ['einternal', 'state'])
+    job_einternal = call_xtp_cmd(cmd_einternal, workdir)
 
-    # # step3
-    # # Change options
-    
-    # output = run(job_dump)
-    # print(output)
+    # step 5
+    output = run(gather(job_map, job_dump, job_neighborlist, job_einternal))
+    print(output)
+    print(options)
 
 
 def initial_config(options: Dict) -> Dict:
@@ -83,6 +105,13 @@ def initial_config(options: Dict) -> Dict:
     # Copy option files to temp file
     path_votcashare = options['path_votcashare']
     copy_tree(join(path_votcashare, 'xtp/xml'), optionfiles)
+
+    # Copy input provided by the user to tempfolder
+    d = options.copy()
+    for key, val in d.items():
+        if isinstance(val, str) and os.path.isfile(val):
+            shutil.copy(val, scratch_dir)
+            options[key] = join(scratch_dir, os.path.basename(val))
 
     dict_config = {
         'scratch_dir': scratch_dir, 'path_optionfiles': optionfiles}

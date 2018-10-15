@@ -17,77 +17,78 @@ changeoptions:
   neighborlist:
     constant: 0.6
 
-  jobwriter:
-    keys:
-      - "mps.monomer"
-      - "mps.background"
-    states:
-      "n e h"
+  # jobwriter:
+  #   keys:
+  #     - "mps.monomer"
+  #     - "mps.background"
+  #   states:
+  #     "n e h"
   
-  xqmultipole:
-    job_file:
-      "xmultipole.jobs"
-    emp_file:
-      "mps.tab"
-    induce: 0
-    pdb_check: 0
+  # xqmultipole:
+  #   job_file:
+  #     "xmultipole.jobs"
+  #   emp_file:
+  #     "mps.tab"
+  #   induce: 0
+  #   pdb_check: 0
 
-    delete_entry:
-      write_chk
+    # delete_entry:
+    #   write_chk
 
-  eqm:
-    dftpackage:
-      "OPTIONFILES/xtpdft.xml"
-    gwbse_options:
-      "OPTIONFILES/mbgft.xml"
+  # eqm:
+  #   dftpackage:
+  #     "OPTIONFILES/xtpdft.xml"
+  #   gwbse_options:
+  #     "OPTIONFILES/mbgft.xml"
 
-  xtpdft:
-    threads: 0
+  # xtpdft:
+  #   threads: 0
+  
+  # mbgft:
+  #   openmp: 0
+  #   range: full
 
-  mbgft:
-    openmp: 0
-    range: full
+  # esp2multipole:
+  #   openmp: 0
 
-  esp2multipole:
-    openmp: 0
+  # iqm:
+  #   bsecoupling_options: "OPTIONFILES/bsecoupling.xml"
+  #   dftpackage: "OPTIONFILES/xtpdft_pair.xml"
+  #   gwbse_options: "OPTIONFILES/mbgft_pair.xml"
 
-  iqm:
-    bsecoupling_options: "OPTIONFILES/bsecoupling.xml"
-    dftpackage: "OPTIONFILES/xtpdft_pair.xml"
-    gwbse_options: "OPTIONFILES/mbgft_pair.xml"
-    singlet: "Methane:s1"
-    triplet: "Methane:t1"
-    electron: "Methane:e1"
-    hole: "Methane:h1"
+  #   singlet: "Methane:s1"
+  #   triplet: "Methane:t1"
+  #   electron: "Methane:e1"
+  #   hole: "Methane:h1"
 
-  xtpdft_pair:
-    read_guess: 1
-    energy: 1e-2
-    threads: 0
+  # xtpdft_pair:
+  #   read_guess: 1
+  #   energy: 1e-2
+  #   threads: 0
 
-  mbgft_pair:
-    ranges: full
-    openmp: 0
-    tasks: "singlets,triplets,iqm"
-  bsecoupling:
-    openmp: 0
+  # mbgft_pair:
+  #   ranges: full
+  #   openmp: 0
+  #   tasks: "singlets,triplets,iqm"
+  # bsecoupling:
+  #   openmp: 0
 
-  jobwriter_qmmm:
-    keys: "mps.monomer mps.background"
+  # jobwriter_qmmm:
+  #   keys: "mps.monomer mps.background"
 
-  qmmm:
-   archiving: iterations
-   dftpackage: "OPTIONFILES/xtpdft_qmmm.xml"
-   gwbse_options: "OPTIONFILES/mbgft_qmmm.xml"
-   cutoff1: 1
-   cutoff2: 1.2
+  # qmmm:
+  #  archiving: iterations
+  #  dftpackage: "OPTIONFILES/xtpdft_qmmm.xml"
+  #  gwbse_options: "OPTIONFILES/mbgft_qmmm.xml"
+  #  cutoff1: 1
+  #  cutoff2: 1.2
 
-  xtpdft_qmmm:
-    threads: 0
+  # xtpdft_qmmm:
+  #   threads: 0
 
-  mbgft_qmmm:
-    openmp: 0
-    ranges: full
+  # mbgft_qmmm:
+  #   openmp: 0
+  #   ranges: full
 
 
 
