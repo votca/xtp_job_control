@@ -1,5 +1,6 @@
 from .runner import run
 from .input import validate_input
+from .xml_editor import edit_options
 from distutils.dir_util import copy_tree
 from os.path import join
 from typing import Dict
@@ -35,16 +36,10 @@ def create_workflow_simulation(options: Dict) -> object:
     """
     Use the `options` to create a workflow
     """
-    change_options_files(options['changeoptions'], options['path_optionfiles'])
+    edit_options(options['changeoptions'], options['path_optionfiles'])
 
 
-def change_options_files(changeoptions: Dict, path_optionfiles: str) -> None:
-    """
-    Change the temporal optionfiles with the input provided by the user.
-    """
-    
 
-    
     # # Step1
     # # runs the mapping from MD coordinates to segments and creates .sql file
     # # you can explore the created .sql file with e.g. sqlitebrowser
