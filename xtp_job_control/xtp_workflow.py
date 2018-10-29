@@ -1,7 +1,7 @@
 from .runner import run
 from .input import validate_input
 from .worflow_components import (
-    call_xtp_cmd, create_promise_command, edit_options, merge_promised_dict)
+    call_xtp_cmd, create_promise_command, edit_jobs_file, edit_options, merge_promised_dict)
 from distutils.dir_util import copy_tree
 from noodles import gather
 from os.path import join
@@ -84,7 +84,29 @@ def create_workflow_simulation(options: Dict) -> object:
     job_einternal = call_xtp_cmd(cmd_einternal, workdir)
 
     # step 5
-    output = run(gather(job_map, job_dump, job_neighborlist, job_einternal))
+    # setup jobfile xqmultipole
+    job_opts_xq = edit_options(changeoptions, ['jobwriter'], path_optionfiles)
+    results = merge_promised_dict(results, job_opts_xq)
+    cmd_setup_xqmultipole = create_promise_command(
+        "xtp_run -e jobwriter -o {} -f {} -s 0", results, ['jobwriter', 'state'])
+    job_setup_xqmultipole = call_xtp_cmd(
+        cmd_setup_xqmultipole, workdir, expected_output={
+            'mps.tab': 'jobwriter.mps.background.tab',
+            'xqmultipole.jobs': 'jobwriter.mps.monomer.xml'})
+
+    # step 6
+    # Allow only the first 3 jobs to run
+    results = merge_promised_dict(results, job_setup_xqmultipole)
+    job_select_jobs = edit_jobs_file(results, 'xqmultipole.jobs', [1, 2, 3])
+
+    # step 7
+    # Run the xqmultipole jobs
+
+
+    # RUN the workflow
+    output = run(gather(
+        job_map, job_dump, job_neighborlist, job_einternal, job_setup_xqmultipole,
+        job_select_jobs))
     print(output)
     print(options)
 

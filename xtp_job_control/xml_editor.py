@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 from os.path import join
-from typing import Dict
+from typing import (Dict, List)
 
 
 def edit_xml_options(options: Dict, path: str) -> Dict:
@@ -32,6 +32,26 @@ def edit_xml_file(path_file: str, xml_file: str, sections: Dict) -> dict:
         xpath = join(xml_file, key)
         node = root.find(xpath)
         node.text = str(val)
+
+    tree.write(path_file)
+
+    return path_file
+
+
+def edit_xml_job_file(path_file: str, jobs_to_run: List, status: str="COMPLETE"):
+    """
+    Read XML Containing a set of job and change status
+    """
+    # Parse XML Tree
+    tree = ET.parse(path_file)
+    root = tree.getroot()
+
+    for job in root.findall('job'):
+        ids = job.find('id')
+        i = int(ids.text)
+        if i not in jobs_to_run:
+            status = job.find('status')
+            status.text = status
 
     tree.write(path_file)
 

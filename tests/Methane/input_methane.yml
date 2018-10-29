@@ -17,12 +17,11 @@ changeoptions:
   neighborlist:
     constant: 0.6
 
-  # jobwriter:
-  #   keys:
-  #     - "mps.monomer"
-  #     - "mps.background"
-  #   states:
-  #     "n e h"
+  jobwriter:
+    keys:
+      "mps.monomer mps.background"
+    states:
+      "n e h"
   
   # xqmultipole:
   #   job_file:

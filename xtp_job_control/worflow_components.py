@@ -1,4 +1,4 @@
-from .xml_editor import edit_xml_options
+from .xml_editor import (edit_xml_job_file, edit_xml_options)
 from noodles import schedule_hint
 from subprocess import (PIPE, Popen)
 from typing import (Dict, List)
@@ -20,12 +20,12 @@ def call_xtp_cmd(cmd: str, workdir: str, expected_output: List=None):
         rs = p.communicate()
 
     logger.info("running command: {}".format(cmd))
+    logger.info("command output: {}".format(rs[0]))
+    logger.error("command error: {}".format(rs[1]))
 
     if expected_output is None:
         return None
     else:
-        logger.info("command output: {}".format(rs[0]))
-        logger.error("command error: {}".format(rs[1]))
         return {key: retrieve_ouput(workdir, file_name) for key, file_name
                 in expected_output.items()}
 
@@ -67,6 +67,15 @@ def retrieve_ouput(workdir: str, expected_file: str) -> str:
             msg = "the command failed producing no output files"
             raise RuntimeError(msg)
         else:
-            return rs[0]
+            return os.path.join(workdir, rs[0])
     else:
         return None
+
+
+@schedule_hint()
+def edit_jobs_file(dict_results: Dict, file_name: str, jobs_to_run: List):
+    """
+    Run only the jobs listed in jobs_to_run
+    """
+    path = dict_results[file_name]
+    return edit_xml_job_file(path, jobs_to_run)
