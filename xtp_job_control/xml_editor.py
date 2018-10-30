@@ -38,7 +38,7 @@ def edit_xml_file(path_file: str, xml_file: str, sections: Dict) -> dict:
     return path_file
 
 
-def edit_xml_job_file(path_file: str, jobs_to_run: List, status: str="COMPLETE"):
+def edit_xml_job_file(path_file: str, jobs_to_run: List):
     """
     Read XML Containing a set of job and change status
     """
@@ -49,9 +49,13 @@ def edit_xml_job_file(path_file: str, jobs_to_run: List, status: str="COMPLETE")
     for job in root.findall('job'):
         ids = job.find('id')
         i = int(ids.text)
-        if i not in jobs_to_run:
-            status = job.find('status')
-            status.text = status
+        status = job.find('status')
+        if jobs_to_run is None:
+            status.text = "AVAILABLE"
+        elif i not in jobs_to_run:
+            status.text = "COMPLETE"
+        else:
+            status.text = "AVAILABLE"
 
     tree.write(path_file)
 

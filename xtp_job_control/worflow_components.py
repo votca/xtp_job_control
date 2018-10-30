@@ -54,7 +54,8 @@ def create_promise_command(template: str, dict_files: Dict, identifiers: List) -
     Use a `template` together with the previous result `dict_files`
     to create a new command line str, using different file `identifiers`.
     """
-    return template.format(*[dict_files[f] for f in identifiers])
+    for i in identifiers:
+        return template.format(*[dict_files[f] for f in identifiers])
 
 
 def retrieve_ouput(workdir: str, expected_file: str) -> str:
@@ -79,3 +80,13 @@ def edit_jobs_file(dict_results: Dict, file_name: str, jobs_to_run: List):
     """
     path = dict_results[file_name]
     return edit_xml_job_file(path, jobs_to_run)
+
+
+@schedule_hint()
+def split_xqmultipole_calculations(config: dict) -> dict:
+    """
+    SPlit the jobs specified in xqmultipole in independent runs then
+    gather the results
+    """
+    pass
+    # xtp_parallel -e xqmultipole -f state.sql -o OPTIONFILES/xqmultipole.xml -s 0 -t 1 -c 1000 -j "run" > xqmultipole.log

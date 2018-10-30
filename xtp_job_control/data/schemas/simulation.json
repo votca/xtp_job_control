@@ -24,6 +24,11 @@
 	    "type": "string",
 	    "description": "path to the trajectory file"
 	},
+	"xqmultipole_jobs": {
+	    "type": ["array", "null"],
+	    "description": "jobs Only this set of Jobs",
+	    "default": null
+	},
 	"changeoptions": {
 	    "type": "object",
 	    "description": "options to change from default templates",

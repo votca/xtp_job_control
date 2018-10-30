@@ -1,7 +1,8 @@
 from .runner import run
 from .input import validate_input
 from .worflow_components import (
-    call_xtp_cmd, create_promise_command, edit_jobs_file, edit_options, merge_promised_dict)
+    call_xtp_cmd, create_promise_command, edit_jobs_file, edit_options,
+    merge_promised_dict)
 from distutils.dir_util import copy_tree
 from noodles import gather
 from os.path import join
@@ -48,12 +49,12 @@ def create_workflow_simulation(options: Dict) -> object:
     # Step1
     # runs the mapping from MD coordinates to segments and creates .sql file
     # you can explore the created .sql file with e.g. sqlitebrowser
-    # calls something like:
-    # xtp_map -t MD_FILES/topol.tpr -c MD_FILES/conf.gro -s system.xml -f state.sql
     results['state'] = path_state
     args = create_promise_command(
         "xtp_map -t {} -c {} -s {} -f {}", results, ['topology', 'trajectory', 'system', 'state'])
 
+    # calls something like:
+    # xtp_map -t MD_FILES/topol.tpr -c MD_FILES/conf.gro -s system.xml -f state.sql
     job_map = call_xtp_cmd(args, workdir, expected_output={'state': 'state.sql'})
 
     # step2
@@ -93,22 +94,28 @@ def create_workflow_simulation(options: Dict) -> object:
         cmd_setup_xqmultipole, workdir, expected_output={
             'mps.tab': 'jobwriter.mps.background.tab',
             'xqmultipole.jobs': 'jobwriter.mps.monomer.xml'})
+    results = merge_promised_dict(results, job_setup_xqmultipole)
 
     # step 6
     # Allow only the first 3 jobs to run
-    results = merge_promised_dict(results, job_setup_xqmultipole)
-    job_select_jobs = edit_jobs_file(results, 'xqmultipole.jobs', [1, 2, 3])
+    xqmultipole_jobs = options['xqmultipole_jobs']
+
+    job_select_jobs = edit_jobs_file(results, 'xqmultipole.jobs', xqmultipole_jobs)
+    results = merge_promised_dict(results, job_select_jobs)
 
     # step 7
     # Run the xqmultipole jobs
+    job_change_opts = edit_options(changeoptions, ['xqmultipole'], path_optionfiles)
 
+    # step 8
+    # Split jobs into independent calculations
+    # jobs_xqmultipole = split_xqmultipole_calculations(results)
 
     # RUN the workflow
     output = run(gather(
         job_map, job_dump, job_neighborlist, job_einternal, job_setup_xqmultipole,
         job_select_jobs))
     print(output)
-    print(options)
 
 
 def initial_config(options: Dict) -> Dict:
@@ -127,6 +134,7 @@ def initial_config(options: Dict) -> Dict:
     # Copy option files to temp file
     path_votcashare = options['path_votcashare']
     copy_tree(join(path_votcashare, 'xtp/xml'), optionfiles)
+    shutil.copy(join(path_votcashare, 'ctp/xml/xqmultipole.xml'), optionfiles)
 
     # Copy input provided by the user to tempfolder
     d = options.copy()
