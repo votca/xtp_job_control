@@ -2,7 +2,7 @@ from .runner import run
 from .input import validate_input
 from .worflow_components import (
     call_xtp_cmd, create_promise_command, edit_jobs_file, edit_options,
-    merge_promised_dict)
+    merge_promised_dict, split_xqmultipole_calculations)
 from distutils.dir_util import copy_tree
 from noodles import gather
 from os.path import join
@@ -92,29 +92,32 @@ def create_workflow_simulation(options: Dict) -> object:
         "xtp_run -e jobwriter -o {} -f {} -s 0", results, ['jobwriter', 'state'])
     job_setup_xqmultipole = call_xtp_cmd(
         cmd_setup_xqmultipole, workdir, expected_output={
-            'mps.tab': 'jobwriter.mps.background.tab',
-            'xqmultipole.jobs': 'jobwriter.mps.monomer.xml'})
+            'mps_tab': 'jobwriter.mps.background.tab',
+            'xqmultipole_jobs': 'jobwriter.mps.monomer.xml'})
     results = merge_promised_dict(results, job_setup_xqmultipole)
 
     # step 6
     # Allow only the first 3 jobs to run
-    xqmultipole_jobs = options['xqmultipole_jobs']
-
-    job_select_jobs = edit_jobs_file(results, 'xqmultipole.jobs', xqmultipole_jobs)
+    job_select_jobs = edit_jobs_file(
+        results, 'xqmultipole_jobs', options['xqmultipole_jobs'])
     results = merge_promised_dict(results, job_select_jobs)
 
     # step 7
     # Run the xqmultipole jobs
-    job_change_opts = edit_options(changeoptions, ['xqmultipole'], path_optionfiles)
+    job_xqmultipole_opts = edit_options(changeoptions, ['xqmultipole'], path_optionfiles)
+    results = merge_promised_dict(results, job_xqmultipole_opts)
 
-    # step 8
+    # # step 8
     # Split jobs into independent calculations
-    # jobs_xqmultipole = split_xqmultipole_calculations(results)
+    jobs_xqmultipole = split_xqmultipole_calculations(results)
 
+    # Run the xqmultipole jobs
+    
     # RUN the workflow
-    output = run(gather(
-        job_map, job_dump, job_neighborlist, job_einternal, job_setup_xqmultipole,
-        job_select_jobs))
+    output = run(gather(results, jobs_xqmultipole))
+    # output = run(gather(
+    #     job_map, job_dump, job_neighborlist, job_einternal, job_setup_xqmultipole,
+    #     job_select_jobs, job_xqmultipole_opts, jobs_xqmultipole))
     print(output)
 
 

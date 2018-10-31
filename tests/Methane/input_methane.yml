@@ -14,7 +14,7 @@ trajectory:
   "tests/Methane/MD_FILES/conf.gro" 
 
 xqmultipole_jobs: [1, 2, 3]
-  
+
 changeoptions:
   neighborlist:
     constant: 0.6
@@ -26,12 +26,10 @@ changeoptions:
       "n e h"
   
   xqmultipole:
-    job_file:
-      "jobwriter.mps.monomer.xml"
-    emp_file:
-      "jobwriter.mps.background.tab"
-    induce: 0
-    pdb_check: 0
+    tholemodel:
+      induce: 0
+    control:
+      pdb_check: 0
 
     # delete_entry:
     #   write_chk

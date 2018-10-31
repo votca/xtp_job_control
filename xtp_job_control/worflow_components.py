@@ -1,13 +1,25 @@
-from .xml_editor import (edit_xml_job_file, edit_xml_options)
-from noodles import schedule_hint
+from .xml_editor import (edit_xml_job_file, edit_xml_options, read_available_jobs)
+from collections import defaultdict
+from noodles import (schedule, schedule_hint)
 from subprocess import (PIPE, Popen)
 from typing import (Dict, List)
 import logging
 import fnmatch
 import os
+import shutil
 
 # Starting logger
 logger = logging.getLogger(__name__)
+
+
+class Results(dict):
+
+    def __init__(self, init):
+        self.state = init
+
+    def __getitem__(self, val):
+        return schedule(self.sate[val])
+
 
 
 @schedule_hint()
@@ -79,7 +91,7 @@ def edit_jobs_file(dict_results: Dict, file_name: str, jobs_to_run: List):
     Run only the jobs listed in jobs_to_run
     """
     path = dict_results[file_name]
-    return edit_xml_job_file(path, jobs_to_run)
+    return {file_name: edit_xml_job_file(path, jobs_to_run)}
 
 
 @schedule_hint()
@@ -88,5 +100,24 @@ def split_xqmultipole_calculations(config: dict) -> dict:
     SPlit the jobs specified in xqmultipole in independent runs then
     gather the results
     """
-    pass
-    # xtp_parallel -e xqmultipole -f state.sql -o OPTIONFILES/xqmultipole.xml -s 0 -t 1 -c 1000 -j "run" > xqmultipole.log
+    available_jobs = read_available_jobs(config['xqmultipole_jobs'])
+
+    # Make a different folder for each job
+    scratch_dir = config['scratch_dir']
+    tmp_dir = os.path.join(scratch_dir, 'xqmultipole_jobs')
+    os.mkdir(tmp_dir)
+
+    # Copy job dependencies to a new folder
+    results = defaultdict(dict)
+    for job in available_jobs:
+        idx = "job_" + job.find('id').text
+        name = "xqmultipole_{}".format(idx)
+        workdir = os.path.join(tmp_dir, name)
+        os.mkdir(workdir)
+        results[idx]['workdir'] = workdir
+        for f in ['state', 'xqmultipole_jobs', 'mps_tab', 'xqmultipole']:
+            path_file = os.path.join(workdir, f)
+            shutil.copy(config[f], path_file)
+            results[idx][f] = path_file
+
+    return {'xqmultipole_jobs_dirs': {k: v for k, v in results.items()}}
