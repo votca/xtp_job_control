@@ -1,8 +1,8 @@
 from .runner import run
 from .input import validate_input
 from .worflow_components import (
-    Results, call_xtp_cmd, create_promise_command, edit_jobs_file, edit_options,
-    merge_promised_dict, split_xqmultipole_calculations)
+    Results, call_xtp_cmd, create_promise_command,
+    edit_jobs_file, edit_options, split_xqmultipole_calculations)
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from noodles import gather_dict
@@ -113,19 +113,20 @@ def create_workflow_simulation(options: Dict) -> object:
         results['job_setup_xqmultipole']['xqmultipole_jobs'], options['xqmultipole_jobs'])
     results['job_select_jobs'] = job_select_jobs
 
-    # RUN the workflow
-    output = run(gather_dict(**results.state))
-
-    print(output)
-
-    # # step 7
-    # # Run the xqmultipole jobs
-    # job_xqmultipole_opts = edit_options(changeoptions, ['xqmultipole'], path_optionfiles)
-    # results = merge_promised_dict(results, job_xqmultipole_opts)
+    # step 7
+    # Run the xqmultipole jobs
+    job_xqmultipole_opts = edit_options(changeoptions, ['xqmultipole'], path_optionfiles)
+    results['job_xqmultipole_opts'] = job_xqmultipole_opts
 
     # # # step 8
     # # Split jobs into independent calculations
     # jobs_xqmultipole = split_xqmultipole_calculations(results)
+    # results['jobs_xqmultipole'] = jobs_xqmultipole
+
+    # RUN the workflow
+    output = run(gather_dict(**results.state))
+
+    print(output)
 
 
 def initial_config(options: Dict) -> Dict:

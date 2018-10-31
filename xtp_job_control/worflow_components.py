@@ -80,14 +80,6 @@ def edit_options(options: Dict, names_xml_files: List,  path_optionfiles: str) -
 
 
 @schedule_hint()
-def merge_promised_dict(*list_dictionaries: List) -> Dict:
-    """
-    Merge a list of dictionaries into a single dictionary
-    """
-    return {k: v for d in list_dictionaries for k, v in d.items()}
-
-
-@schedule_hint()
 def create_promise_command(string: str, *args) -> str:
     """Use a `string` as template command and fill in the options using
     possible promised `args`
@@ -104,29 +96,33 @@ def edit_jobs_file(path: Path, jobs_to_run: List):
 
 
 @schedule_hint()
-def split_xqmultipole_calculations(config: dict) -> dict:
+def split_xqmultipole_calculations(results: dict) -> dict:
     """
     SPlit the jobs specified in xqmultipole in independent runs then
     gather the results
     """
-    available_jobs = read_available_jobs(config['xqmultipole_jobs'])
+    available_jobs = read_available_jobs(results['xqmultipole_jobs'])
 
     # Make a different folder for each job
-    scratch_dir = config['scratch_dir']
+    scratch_dir = results['scratch_dir']
     tmp_dir = scratch_dir / Path('xqmultipole_jobs')
     tmp_dir.mkdir()
+
+    state_file = results['job_state']['state']
+    mps_tab_file = results['job_setup_xqmultipole']['mps_tab']
+    xqmultipole_jobs_file = results['job_setup_xqmultipole']['xqmultipole_jobs']
+    xqmultipole_file = results['job_xqmultipole_opts']['xqmultipole']
 
     # Copy job dependencies to a new folder
     results = defaultdict(dict)
     for job in available_jobs:
-        idx = "job_" + job.find('id').text
-        name = "xqmultipole_{}".format(idx)
-        workdir = tmp_dir / name
+        idx = job.find('id').text
+        workdir = tmp_dir / "xqmultipole_job_{}".format(idx)
         workdir.mkdir()
         results[idx]['workdir'] = workdir
-        for f in ['state', 'xqmultipole_jobs', 'mps_tab', 'xqmultipole']:
+        for f in [state_file, mps_tab_file]:
             path_file = workdir / f
-            shutil.copy(config[f], path_file)
+            shutil.copy(results[f], path_file.as_posix())
             results[idx][f] = path_file
 
     return {'xqmultipole_jobs_dirs': {k: v for k, v in results.items()}}
