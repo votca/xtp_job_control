@@ -1,10 +1,11 @@
 from .runner import run
 from .input import validate_input
 from .worflow_components import (
-    call_xtp_cmd, create_promise_command, edit_jobs_file, edit_options,
+    Results, call_xtp_cmd, create_promise_command, edit_jobs_file, edit_options,
     merge_promised_dict, split_xqmultipole_calculations)
 from distutils.dir_util import copy_tree
-from noodles import gather
+from pathlib import Path
+from noodles import gather_dict
 from os.path import join
 from typing import Dict
 import datetime
@@ -39,86 +40,92 @@ def create_workflow_simulation(options: Dict) -> object:
     Use the `options` to create a workflow
     """
     workdir = options['scratch_dir']
-    path_optionfiles = options['path_optionfiles']
+    path_optionfiles = Path(options['path_optionfiles'])
     changeoptions = options['changeoptions']
 
     # create results object
-    results = options.copy()
-    path_state = join(workdir, "state.sql")
+    results = Results({'options': options.copy()})
 
     # Step1
     # runs the mapping from MD coordinates to segments and creates .sql file
     # you can explore the created .sql file with e.g. sqlitebrowser
-    results['state'] = path_state
-    args = create_promise_command(
-        "xtp_map -t {} -c {} -s {} -f {}", results, ['topology', 'trajectory', 'system', 'state'])
+    path_state = join(workdir, "state.sql")
+    args = "xtp_map -t {} -c {} -s {} -f {}".format(
+        options['topology'], options['trajectory'], options['system'], path_state)
 
     # calls something like:
     # xtp_map -t MD_FILES/topol.tpr -c MD_FILES/conf.gro -s system.xml -f state.sql
-    job_map = call_xtp_cmd(args, workdir, expected_output={'state': 'state.sql'})
+    job_state = call_xtp_cmd(args, workdir, expected_output={'state': 'state.sql'})
 
     # step2
     # output MD and QM mappings into extract.trajectory_md.pdb and
     # extract.trajectory_qm.pdb files
-    results = merge_promised_dict(results, job_map)
+    results['job_state'] = job_state
+
     cmd_dump = create_promise_command(
-        "xtp_dump -e trajectory2pdb -f {}", results, ['state'])
+        "xtp_dump -e trajectory2pdb -f {}", results['job_state']['state'])
 
     job_dump = call_xtp_cmd(cmd_dump, workdir, expected_output={
         'md_trajectory': 'extract.trajectory_md.pdb',
         'qm_trajectory': 'extract.trajectory_qm.pdb'})
+    results['job_dump'] = job_dump
 
     # step3
     # Change options neighborlist
-    job_change_opts = edit_options(changeoptions, ['neighborlist'], path_optionfiles)
-    results = merge_promised_dict(results, job_dump, job_change_opts)
+    job_opts_neighborlist = edit_options(changeoptions, ['neighborlist'], path_optionfiles)
+    results['job_opts_neighborlist'] = job_opts_neighborlist
     cmd_neighborlist = create_promise_command(
-        "xtp_run -e neighborlist -o {} -f {}", results, ['neighborlist', 'state'])
-    job_neighborlist = call_xtp_cmd(cmd_neighborlist, workdir)
+        "xtp_run -e neighborlist -o {} -f {}",
+        results['job_opts_neighborlist']['neighborlist'], results['job_state']['state'])
 
-    # step 4
+    job_neighborlist = call_xtp_cmd(
+        cmd_neighborlist, workdir, expected_output={
+            'neighborlist': "OPTIONFILES/neighborlist.xml"})
+    results['job_neighborlist'] = job_neighborlist
+
+    # # step 4
     # read in reorganization energies stored in system.xml to state.sql
-    einternal_file = join(path_optionfiles, 'einternal.xml')
-    results = merge_promised_dict(results, {'einternal': einternal_file})
+    einternal_file = path_optionfiles / 'einternal.xml'
     cmd_einternal = create_promise_command(
-        "xtp_run -e einternal -o {} -f {}", results, ['einternal', 'state'])
-    job_einternal = call_xtp_cmd(cmd_einternal, workdir)
+        "xtp_run -e einternal -o {} -f {}", results['job_state']['state'], einternal_file)
+    job_einternal = call_xtp_cmd(cmd_einternal, workdir, expected_output={
+        'einternal': einternal_file})
+    results['job_einternal'] = job_einternal
 
     # step 5
     # setup jobfile xqmultipole
     job_opts_xq = edit_options(changeoptions, ['jobwriter'], path_optionfiles)
-    results = merge_promised_dict(results, job_opts_xq)
+    results['job_opts_xq'] = job_opts_xq
+
     cmd_setup_xqmultipole = create_promise_command(
-        "xtp_run -e jobwriter -o {} -f {} -s 0", results, ['jobwriter', 'state'])
+        "xtp_run -e jobwriter -o {} -f {} -s 0",
+        results['job_opts_xq']['jobwriter'], results['job_state']['state'])
+
     job_setup_xqmultipole = call_xtp_cmd(
         cmd_setup_xqmultipole, workdir, expected_output={
             'mps_tab': 'jobwriter.mps.background.tab',
             'xqmultipole_jobs': 'jobwriter.mps.monomer.xml'})
-    results = merge_promised_dict(results, job_setup_xqmultipole)
+    results['job_setup_xqmultipole'] = job_setup_xqmultipole
 
     # step 6
     # Allow only the first 3 jobs to run
     job_select_jobs = edit_jobs_file(
-        results, 'xqmultipole_jobs', options['xqmultipole_jobs'])
-    results = merge_promised_dict(results, job_select_jobs)
+        results['job_setup_xqmultipole']['xqmultipole_jobs'], options['xqmultipole_jobs'])
+    results['job_select_jobs'] = job_select_jobs
 
-    # step 7
-    # Run the xqmultipole jobs
-    job_xqmultipole_opts = edit_options(changeoptions, ['xqmultipole'], path_optionfiles)
-    results = merge_promised_dict(results, job_xqmultipole_opts)
-
-    # # step 8
-    # Split jobs into independent calculations
-    jobs_xqmultipole = split_xqmultipole_calculations(results)
-
-    # Run the xqmultipole jobs
-    
     # RUN the workflow
-    output = run(gather(results, jobs_xqmultipole))
-    # output = run(gather(
-    #     job_map, job_dump, job_neighborlist, job_einternal, job_setup_xqmultipole,
-    #     job_select_jobs, job_xqmultipole_opts, jobs_xqmultipole))
+    output = run(gather_dict(**results.state))
+
     print(output)
+
+    # # step 7
+    # # Run the xqmultipole jobs
+    # job_xqmultipole_opts = edit_options(changeoptions, ['xqmultipole'], path_optionfiles)
+    # results = merge_promised_dict(results, job_xqmultipole_opts)
+
+    # # # step 8
+    # # Split jobs into independent calculations
+    # jobs_xqmultipole = split_xqmultipole_calculations(results)
 
 
 def initial_config(options: Dict) -> Dict:
@@ -128,15 +135,15 @@ def initial_config(options: Dict) -> Dict:
     config_logger(options['workdir'])
     ts = datetime.datetime.now().timestamp()
     prefix = 'xtp_' + str(ts)
-    scratch_dir = tempfile.mkdtemp(prefix=prefix)
+    scratch_dir = Path(tempfile.mkdtemp(prefix=prefix))
 
     # Option files
-    optionfiles = join(scratch_dir, 'OPTIONFILES')
-    os.mkdir(optionfiles)
+    optionfiles = scratch_dir / 'OPTIONFILES'
+    optionfiles.mkdir()
 
     # Copy option files to temp file
     path_votcashare = options['path_votcashare']
-    copy_tree(join(path_votcashare, 'xtp/xml'), optionfiles)
+    copy_tree(join(path_votcashare, 'xtp/xml'), optionfiles.as_posix())
     shutil.copy(join(path_votcashare, 'ctp/xml/xqmultipole.xml'), optionfiles)
 
     # Copy input provided by the user to tempfolder
@@ -144,7 +151,7 @@ def initial_config(options: Dict) -> Dict:
     for key, val in d.items():
         if isinstance(val, str) and os.path.isfile(val):
             shutil.copy(val, scratch_dir)
-            options[key] = join(scratch_dir, os.path.basename(val))
+            options[key] = scratch_dir / Path(val).name
 
     dict_config = {
         'scratch_dir': scratch_dir, 'path_optionfiles': optionfiles}
@@ -159,5 +166,8 @@ def config_logger(workdir: str):
     """
     file_log = join(workdir, 'xtp.log')
     logging.basicConfig(filename=file_log, level=logging.DEBUG,
-                        format='%(levelname)s:%(message)s  %(asctime)s\n',
-                        datefmt='%m/%d/%Y %I:%M:%S %p')
+                        format='%(asctime)s---%(levelname)s\n%(message)s\n',
+                        datefmt='[%I:%M:%S]')
+    logging.getLogger("noodles").setLevel(logging.WARNING)
+    handler = logging.StreamHandler()
+    handler.terminator = ""

@@ -10,7 +10,7 @@ def edit_xml_options(options: Dict, path: str) -> Dict:
     `sections` in the XML file.
     """
     def call_xml_editor(xml_file, sections):
-        path_file = join(path, '{}.xml'.format(xml_file))
+        path_file = path / '{}.xml'.format(xml_file)
         return edit_xml_file(path_file, xml_file, sections)
 
     return {xml_file: call_xml_editor(xml_file, section)
