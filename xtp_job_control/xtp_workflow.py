@@ -121,6 +121,16 @@ def create_workflow_simulation(options: Dict) -> object:
     # Split jobs into independent calculations
     results['jobs_xqmultipole'] = distribute_xqmultipole_jobs(options, results)
 
+    # step 9
+    # #running eanalyze
+    eanalyze_file = path_optionfiles / "eanalyze.xml"
+    cmd_eanalyze = create_promise_command(
+        "xtp_run -e eanalyze -o {} -f {}", eanalyze_file, results['job_state']['state'])
+    results['job_eanalyze'] = call_xtp_cmd(cmd_eanalyze, workdir / 'eanalyze', expected_output={
+        'sitecorr': "eanalyze.sitecorr*out",
+        'sitehist': "eanalyze.sitehist*out"
+    })
+
     # RUN the workflow
     output = run(gather_dict(**results.state))
 

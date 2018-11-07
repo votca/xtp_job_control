@@ -42,6 +42,8 @@ def call_xtp_cmd(cmd: str, workdir: str, expected_output: dict=None):
     Run a bash `cmd` in the `cwd` folder and search for a list of `expected_output`
     files.
     """
+    if not workdir.exists():
+        workdir.mkdir()
     return run_command(cmd, workdir, expected_output)
 
 
@@ -67,15 +69,11 @@ def retrieve_ouput(workdir: str, expected_file: str) -> str:
     """
     Search for `expected_file` files in the `workdir`.
     """
-    if expected_file:
-        path = workdir / Path(expected_file)
-        if not path.exists():
-            msg = "the file: {} does not exists!".format(path.as_posix())
-            raise RuntimeError(msg)
-        else:
-            return path
+    path = workdir / Path(expected_file)
+    if path.exists():
+        return path
     else:
-        return None
+        return list(workdir.rglob(expected_file))
 
 
 @schedule_hint()
@@ -153,11 +151,14 @@ def run_parallel_jobs(dict_input: dict, dict_jobs: dict) -> dict:
     """
     cmd_options = """-s 0 -t 1 -c 1000 -j "run" > xqmultipole.log"""
     state = dict_input['state']
+    results = dict_jobs.copy()
     for key, job_info in dict_jobs.items():
         cmd_parallel = """xtp_parallel -e xqmultipole -f {} -o {} """.format(
             state, job_info['xqmultipole'].as_posix())
 
         # Call subprocess
-        run_command(cmd_parallel + cmd_options, job_info['workdir'])
+        output = run_command(cmd_parallel + cmd_options, job_info['workdir'], expected_output={
+            'tab': 'job_{}.tab'.format(key)})
+        results['tab'] = output['tab']
 
-    return dict_jobs
+    return results
