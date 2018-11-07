@@ -1,4 +1,5 @@
-from .xml_editor import (edit_xml_job_file, edit_xml_options, read_available_jobs)
+from .xml_editor import (
+    create_job_file, edit_xml_job_file, edit_xml_options, read_available_jobs)
 from collections import defaultdict
 from noodles import (schedule, schedule_hint, has_scheduled_methods)
 from noodles.interface import PromisedObject
@@ -31,16 +32,24 @@ class Results(dict):
         self.state[key] = val
 
     def __deepcopy__(self, _):
+        print("calling deep")
         return Results(self.state.copy())
 
 
 @schedule_hint()
-def call_xtp_cmd(cmd: str, workdir: str, expected_output: List=None):
+def call_xtp_cmd(cmd: str, workdir: str, expected_output: dict=None):
     """
     Run a bash `cmd` in the `cwd` folder and search for a list of `expected_output`
     files.
     """
-    with Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, cwd=workdir) as p:
+    return run_command(cmd, workdir, expected_output)
+
+
+def run_command(cmd: str, workdir: str, expected_output: dict=None):
+    """
+    Run a bash command using subprocess
+    """
+    with Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, cwd=workdir.as_posix()) as p:
         rs = p.communicate()
 
     logger.info("RUNNING COMMAND: {}".format(cmd))
@@ -96,33 +105,59 @@ def edit_jobs_file(path: Path, jobs_to_run: List):
 
 
 @schedule_hint()
-def split_xqmultipole_calculations(results: dict) -> dict:
+def split_xqmultipole_calculations(input_dict: dict) -> dict:
     """
-    SPlit the jobs specified in xqmultipole in independent runs then
+    Split the jobs specified in xqmultipole in independent runs then
     gather the results
     """
-    available_jobs = read_available_jobs(results['xqmultipole_jobs'])
+    available_jobs = read_available_jobs(input_dict['xqmultipole_jobs'])
 
     # Make a different folder for each job
-    scratch_dir = results['scratch_dir']
-    tmp_dir = scratch_dir / Path('xqmultipole_jobs')
+    tmp_dir = input_dict['scratch_dir'] / 'xqmultipole_jobs'
     tmp_dir.mkdir()
-
-    state_file = results['job_state']['state']
-    mps_tab_file = results['job_setup_xqmultipole']['mps_tab']
-    xqmultipole_jobs_file = results['job_setup_xqmultipole']['xqmultipole_jobs']
-    xqmultipole_file = results['job_xqmultipole_opts']['xqmultipole']
 
     # Copy job dependencies to a new folder
     results = defaultdict(dict)
     for job in available_jobs:
         idx = job.find('id').text
+        # create workdir for each job
         workdir = tmp_dir / "xqmultipole_job_{}".format(idx)
         workdir.mkdir()
         results[idx]['workdir'] = workdir
-        for f in [state_file, mps_tab_file]:
-            path_file = workdir / f
-            shutil.copy(results[f], path_file.as_posix())
-            results[idx][f] = path_file
 
-    return {'xqmultipole_jobs_dirs': {k: v for k, v in results.items()}}
+        # Job files
+        job_idx = "job_{}".format(idx)
+        job_file = workdir / (job_idx + '.xml')
+        create_job_file(job, job_file)
+        results[idx][job_idx] = job_file
+
+        # MP files
+        shutil.copytree(input_dict['mp_files'], workdir / 'MP_FILES')
+
+        # replace references inside xqmultipole.xml
+        xqmultipole = input_dict['xqmultipole']
+        shutil.copy(xqmultipole, workdir.as_posix())
+        options = {'xqmultipole':
+                   {'multipoles': input_dict['system'].as_posix(),
+                    'control': {'job_file': job_file.name,
+                                'emp_file': input_dict['mps_tab'].as_posix()}}}
+        results[idx]['xqmultipole'] = edit_xml_options(options, workdir)['xqmultipole']
+
+    return {k: v for k, v in results.items()}
+
+
+@schedule_hint()
+def run_parallel_jobs(dict_input: dict, dict_jobs: dict) -> dict:
+    """
+    Run a set of jobs defined in `dict_jobs`.
+    """
+    cmd_options = """-s 0 -t 1 -c 1000 -j "run" > xqmultipole.log"""
+    state = dict_input['state']
+    for key, job_info in dict_jobs.items():
+        cmd_parallel = """xtp_parallel -e xqmultipole -f {} -o {} """.format(
+            state, job_info['xqmultipole'].as_posix())
+
+        # Call subprocess
+        run_command(cmd_parallel + cmd_options, job_info['workdir'])
+
+    return dict_jobs

@@ -2,11 +2,10 @@ from .runner import run
 from .input import validate_input
 from .worflow_components import (
     Results, call_xtp_cmd, create_promise_command,
-    edit_jobs_file, edit_options, split_xqmultipole_calculations)
+    edit_jobs_file, edit_options, run_parallel_jobs, split_xqmultipole_calculations)
 from distutils.dir_util import copy_tree
 from pathlib import Path
-from noodles import gather_dict
-from os.path import join
+from noodles import (gather_dict, lift)
 from typing import Dict
 import datetime
 import logging
@@ -40,7 +39,7 @@ def create_workflow_simulation(options: Dict) -> object:
     Use the `options` to create a workflow
     """
     workdir = options['scratch_dir']
-    path_optionfiles = Path(options['path_optionfiles'])
+    path_optionfiles = options['path_optionfiles']
     changeoptions = options['changeoptions']
 
     # create results object
@@ -49,7 +48,7 @@ def create_workflow_simulation(options: Dict) -> object:
     # Step1
     # runs the mapping from MD coordinates to segments and creates .sql file
     # you can explore the created .sql file with e.g. sqlitebrowser
-    path_state = join(workdir, "state.sql")
+    path_state = workdir / "state.sql"
     args = "xtp_map -t {} -c {} -s {} -f {}".format(
         options['topology'], options['trajectory'], options['system'], path_state)
 
@@ -118,15 +117,33 @@ def create_workflow_simulation(options: Dict) -> object:
     job_xqmultipole_opts = edit_options(changeoptions, ['xqmultipole'], path_optionfiles)
     results['job_xqmultipole_opts'] = job_xqmultipole_opts
 
-    # # # step 8
-    # # Split jobs into independent calculations
-    # jobs_xqmultipole = split_xqmultipole_calculations(results)
-    # results['jobs_xqmultipole'] = jobs_xqmultipole
+    # step 8
+    # Split jobs into independent calculations
+    results['jobs_xqmultipole'] = distribute_xqmultipole_jobs(options, results)
 
     # RUN the workflow
     output = run(gather_dict(**results.state))
 
     print(output)
+
+
+def distribute_xqmultipole_jobs(options: dict, results: dict) -> dict:
+    """
+    Run the xqmultipole_jobs in separated folders
+    """
+    split_input = {
+        'scratch_dir': options['scratch_dir'],
+        'mp_files': options['mp_files'],
+        'xqmultipole_jobs': results['job_setup_xqmultipole']['xqmultipole_jobs'],
+        'xqmultipole': results['job_xqmultipole_opts']['xqmultipole'],
+        'system': options['system'],
+        'state': results['job_state']['state'],
+        'mps_tab': results['job_setup_xqmultipole']['mps_tab']
+
+    }
+    dict_jobs = split_xqmultipole_calculations(lift(split_input))
+
+    return run_parallel_jobs(lift(split_input), dict_jobs)
 
 
 def initial_config(options: Dict) -> Dict:
@@ -143,9 +160,9 @@ def initial_config(options: Dict) -> Dict:
     optionfiles.mkdir()
 
     # Copy option files to temp file
-    path_votcashare = options['path_votcashare']
-    copy_tree(join(path_votcashare, 'xtp/xml'), optionfiles.as_posix())
-    shutil.copy(join(path_votcashare, 'ctp/xml/xqmultipole.xml'), optionfiles)
+    path_votcashare = Path(options['path_votcashare'])
+    copy_tree(path_votcashare / 'xtp/xml', optionfiles.as_posix())
+    shutil.copy(path_votcashare / 'ctp/xml/xqmultipole.xml', optionfiles)
 
     # Copy input provided by the user to tempfolder
     d = options.copy()
@@ -165,7 +182,7 @@ def config_logger(workdir: str):
     """
     Setup the logging infrasctucture.
     """
-    file_log = join(workdir, 'xtp.log')
+    file_log = os.path.join(workdir, 'xtp.log')
     logging.basicConfig(filename=file_log, level=logging.DEBUG,
                         format='%(asctime)s---%(levelname)s\n%(message)s\n',
                         datefmt='[%I:%M:%S]')

@@ -30,7 +30,13 @@ def edit_xml_file(path_file: str, xml_file: str, sections: Dict) -> dict:
             node.text = str(val)
         else:
             for key, x in val.items():
-                update_node(join(path, key), x)
+                # Remove or update Leave
+                if key.lower() == 'delete_entry':
+                    node = root.find(path)
+                    leave = root.find(join(path, x))
+                    node.remove(leave)
+                else:
+                    update_node(join(path, key), x)
 
     # Parse XML Tree
     tree = ET.parse(path_file)
@@ -81,3 +87,15 @@ def read_available_jobs(path_file: str, state: str="AVAILABLE") -> List:
         if status.text == state:
             rs.append(j)
     return rs
+
+
+def create_job_file(job: object, job_file: str):
+    """
+    Create a xml file containing the information necessary to run a job.
+    """
+    root = ET.Element("jobs")
+    root.text = '\n\t'
+    root.insert(0, job)
+
+    tree = ET.ElementTree(root)
+    tree.write(job_file)
