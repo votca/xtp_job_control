@@ -54,68 +54,61 @@ def create_workflow_simulation(options: Dict) -> object:
 
     # calls something like:
     # xtp_map -t MD_FILES/topol.tpr -c MD_FILES/conf.gro -s system.xml -f state.sql
-    job_state = call_xtp_cmd(args, workdir, expected_output={'state': 'state.sql'})
+    results['job_state'] = call_xtp_cmd(args, workdir, expected_output={'state': 'state.sql'})
 
     # step2
     # output MD and QM mappings into extract.trajectory_md.pdb and
     # extract.trajectory_qm.pdb files
-    results['job_state'] = job_state
-
     cmd_dump = create_promise_command(
         "xtp_dump -e trajectory2pdb -f {}", results['job_state']['state'])
 
-    job_dump = call_xtp_cmd(cmd_dump, workdir, expected_output={
+    results['job_dump'] = call_xtp_cmd(cmd_dump, workdir, expected_output={
         'md_trajectory': 'extract.trajectory_md.pdb',
         'qm_trajectory': 'extract.trajectory_qm.pdb'})
-    results['job_dump'] = job_dump
 
     # step3
     # Change options neighborlist
-    job_opts_neighborlist = edit_options(changeoptions, ['neighborlist'], path_optionfiles)
-    results['job_opts_neighborlist'] = job_opts_neighborlist
+    results['job_opts_neighborlist'] = edit_options(
+        changeoptions, ['neighborlist'], path_optionfiles)
+
     cmd_neighborlist = create_promise_command(
         "xtp_run -e neighborlist -o {} -f {}",
         results['job_opts_neighborlist']['neighborlist'], results['job_state']['state'])
 
-    job_neighborlist = call_xtp_cmd(
+    results['job_neighborlist'] = call_xtp_cmd(
         cmd_neighborlist, workdir, expected_output={
             'neighborlist': "OPTIONFILES/neighborlist.xml"})
-    results['job_neighborlist'] = job_neighborlist
 
     # # step 4
     # read in reorganization energies stored in system.xml to state.sql
     einternal_file = path_optionfiles / 'einternal.xml'
     cmd_einternal = create_promise_command(
         "xtp_run -e einternal -o {} -f {}", results['job_state']['state'], einternal_file)
-    job_einternal = call_xtp_cmd(cmd_einternal, workdir, expected_output={
+    results['job_einternal'] = call_xtp_cmd(cmd_einternal, workdir, expected_output={
         'einternal': einternal_file})
-    results['job_einternal'] = job_einternal
 
     # step 5
     # setup jobfile xqmultipole
-    job_opts_xq = edit_options(changeoptions, ['jobwriter'], path_optionfiles)
-    results['job_opts_xq'] = job_opts_xq
+    results['job_opts_xq'] = edit_options(changeoptions, ['jobwriter'], path_optionfiles)
 
     cmd_setup_xqmultipole = create_promise_command(
         "xtp_run -e jobwriter -o {} -f {} -s 0",
         results['job_opts_xq']['jobwriter'], results['job_state']['state'])
 
-    job_setup_xqmultipole = call_xtp_cmd(
+    results['job_setup_xqmultipole'] = call_xtp_cmd(
         cmd_setup_xqmultipole, workdir, expected_output={
             'mps_tab': 'jobwriter.mps.background.tab',
             'xqmultipole_jobs': 'jobwriter.mps.monomer.xml'})
-    results['job_setup_xqmultipole'] = job_setup_xqmultipole
 
     # step 6
     # Allow only the first 3 jobs to run
-    job_select_jobs = edit_jobs_file(
+    results['job_select_jobs'] = edit_jobs_file(
         results['job_setup_xqmultipole']['xqmultipole_jobs'], options['xqmultipole_jobs'])
-    results['job_select_jobs'] = job_select_jobs
 
     # step 7
     # Run the xqmultipole jobs
-    job_xqmultipole_opts = edit_options(changeoptions, ['xqmultipole'], path_optionfiles)
-    results['job_xqmultipole_opts'] = job_xqmultipole_opts
+    results['job_xqmultipole_opts'] = edit_options(
+        changeoptions, ['xqmultipole'], path_optionfiles)
 
     # step 8
     # Split jobs into independent calculations
@@ -130,6 +123,10 @@ def create_workflow_simulation(options: Dict) -> object:
         'sitecorr': "eanalyze.sitecorr*out",
         'sitehist': "eanalyze.sitehist*out"
     })
+
+    # step 10
+    # Run eqm
+
 
     # RUN the workflow
     output = run(gather_dict(**results.state))
