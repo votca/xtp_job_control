@@ -18,8 +18,12 @@ mp_files:
 
 qc_files:
   "tests/Methane/QC_FILES"
-  
+
+# Run only the first 3 jobs
 xqmultipole_jobs: [1, 2, 3]
+
+# Run only the first 2 jobs
+eqm_jobs: [1, 2]
 
 changeoptions:
   neighborlist:

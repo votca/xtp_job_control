@@ -34,7 +34,12 @@
 	},
 	"xqmultipole_jobs": {
 	    "type": ["array", "null"],
-	    "description": "jobs Only this set of Jobs",
+	    "description": "number of xqmultipole jobs to run. If null run all",
+	    "default": null
+	},
+	"eqm_jobs": {
+	    "type": ["array", "null"],
+	    "description": "number of eqm jobs to run. If null run all",
 	    "default": null
 	},
 	"changeoptions": {

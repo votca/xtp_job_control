@@ -74,29 +74,22 @@ def create_workflow_simulation(options: Dict) -> object:
     results['job_einternal'] = run_einternal(results)
 
     # step config xqmultipole
-    # setup jobfile xqmultipole
-    results['job_opts_xq'] = edit_options(changeoptions, ['jobwriter'], path_optionfiles)
-    results = run_config_xqmultipole(results)
-
-    # step  run xqmultipole
-    # Run the xqmultipole jobs
-    results['job_xqmultipole_opts'] = edit_options(
-        changeoptions, ['xqmultipole'], path_optionfiles)
+    results['job_opts_xqmultipole'] = edit_options(
+        changeoptions, ['jobwriter', 'xqmultipole'], path_optionfiles)
+    results['job_select_xqmultipole_jobs'] = run_config_xqmultipole(results)
 
     # Run xqmultipole jobs in parallel
     results['jobs_xqmultipole'] = distribute_xqmultipole_jobs(options, results)
 
     # step eanalyze
-    # #running eanalyze
     results['job_eanalyze'] = run_eanalyze(results)
 
     # step eqm
-    # Run eqm
-    results = edit_eqm_options(results)
+    results['job_opts_eqm'] = edit_options(
+        changeoptions, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'], path_optionfiles)
     results = run_eqm(results)
 
-    # # step 11
-    # # Run iqm
+    # step iqm
 
     # RUN the workflow
     output = run(gather_dict(**results.state))
@@ -145,7 +138,7 @@ def run_neighborlist(results: dict) -> dict:
 
 def run_eanalyze(results: dict) -> Dict:
     """
-    
+    call eanalyze tool.
     """
     workdir = results['options']['scratch_dir']
     eanalyze_file = results['options']['path_optionfiles'] / "eanalyze.xml"
@@ -156,22 +149,6 @@ def run_eanalyze(results: dict) -> Dict:
         'sitehist': "eanalyze.sitehist*out"})
 
 
-def edit_eqm_options(results: dict) -> Dict:
-    """
-    Edit the eqm options files using the arguments specified in `changeoptions` and the
-    files located at `path_optionfiles`.
-    """
-    changeoptions = results['options']['changeoptions']
-    path_optionfiles = results['options']['path_optionfiles']
-    results['job_opts_eqm'] = edit_options(changeoptions, ['eqm'], path_optionfiles)
-    results['job_opts_xtpdft'] = edit_options(changeoptions, ['xtpdft'], path_optionfiles)
-    results['job_opts_mbgft'] = edit_options(changeoptions, ['mbgft'], path_optionfiles)
-    results['job_opts_esp2multipole'] = edit_options(
-        changeoptions, ['esp2multipole'], path_optionfiles)
-
-    return results
-
-
 def run_eqm(results: dict) -> dict:
     """
     Run the eqm jobs.
@@ -179,9 +156,14 @@ def run_eqm(results: dict) -> dict:
     cmd_eqm = create_promise_command(
         "xtp_parallel -e eqm -o {} -f {} -s 0 -j write", results['job_opts_eqm']['eqm'],
         results['job_state']['state'])
-    results['job_set_eqm'] = call_xtp_cmd(
+    results['job_setup_eqm'] = call_xtp_cmd(
         cmd_eqm, results['options']['scratch_dir'],
-        expected_output={"eqm": "eqm.jobs"})
+        expected_output={"eqm_jobs": "eqm.jobs"})
+
+    # Select the number of jobs to run based on the input provided by the user
+    results['job_select_eqm_jobs'] = edit_jobs_file(
+        results['job_setup_eqm']['eqm_jobs'],
+        results['options']['eqm_jobs'])
 
     return results
 
@@ -194,7 +176,7 @@ def run_config_xqmultipole(results: dict) -> dict:
 
     cmd_setup_xqmultipole = create_promise_command(
         "xtp_run -e jobwriter -o {} -f {} -s 0",
-        results['job_opts_xq']['jobwriter'], results['job_state']['state'])
+        results['job_opts_xqmultipole']['jobwriter'], results['job_state']['state'])
 
     results['job_setup_xqmultipole'] = call_xtp_cmd(
         cmd_setup_xqmultipole, workdir / "xqmultipole", expected_output={
@@ -203,11 +185,9 @@ def run_config_xqmultipole(results: dict) -> dict:
 
     # step 6
     # Allow only the first 3 jobs to run
-    results['job_select_jobs'] = edit_jobs_file(
+    return edit_jobs_file(
         results['job_setup_xqmultipole']['xqmultipole_jobs'],
         results['options']['xqmultipole_jobs'])
-
-    return results
 
 
 def distribute_xqmultipole_jobs(options: dict, results: dict) -> dict:
@@ -218,7 +198,7 @@ def distribute_xqmultipole_jobs(options: dict, results: dict) -> dict:
         'scratch_dir': options['scratch_dir'],
         'mp_files': options['mp_files'],
         'xqmultipole_jobs': results['job_setup_xqmultipole']['xqmultipole_jobs'],
-        'xqmultipole': results['job_xqmultipole_opts']['xqmultipole'],
+        'xqmultipole': results['job_opts_xqmultipole']['xqmultipole'],
         'system': options['system'],
         'state': results['job_state']['state'],
         'mps_tab': results['job_setup_xqmultipole']['mps_tab']
@@ -247,7 +227,7 @@ def write_output(output: dict, file_name: str="results.yml") -> None:
 
 def to_posix(d):
     """
-    convert the Path object to string
+    convert the Path objects to string
     """
     if isinstance(d, dict):
         for k, v in d.items():

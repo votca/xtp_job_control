@@ -108,7 +108,7 @@ def split_eqm_calculations(input_dict: dict) -> dict:
     Split the jobs specified in xqmultipole in independent jobs then
     gather the results
     """
-    available_jobs = read_available_jobs(input_dict['xqmultipole_jobs'])
+    pass
 
 
 
