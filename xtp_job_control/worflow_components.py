@@ -108,8 +108,6 @@ def split_eqm_calculations(input_dict: dict) -> dict:
     Split the jobs specified in xqmultipole in independent jobs then
     gather the results
     """
-    pass
-
 
 
 @schedule_hint()
@@ -127,16 +125,15 @@ def split_xqmultipole_calculations(input_dict: dict) -> dict:
     # Copy job dependencies to a new folder
     results = defaultdict(dict)
     for job in available_jobs:
+        # identifier
         idx = job.find('id').text
-        # create workdir for each job
-        workdir = tmp_dir / "xqmultipole_job_{}".format(idx)
-        workdir.mkdir()
+
+        workdir = create_workdir(job, idx, tmp_dir, 'xqmultipole_job')
         results[idx]['workdir'] = workdir
 
         # Job files
         job_idx = "job_{}".format(idx)
-        job_file = workdir / (job_idx + '.xml')
-        create_job_file(job, job_file)
+        job_file = create_xml_job_file(job, idx, workdir)
         results[idx][job_idx] = job_file
 
         # MP files
@@ -154,7 +151,26 @@ def split_xqmultipole_calculations(input_dict: dict) -> dict:
     return {k: v for k, v in results.items()}
 
 
+def create_workdir(job: object, idx: str, tmp_dir: Path, keyword: str):
+    """
+    Create temporal workdir
+    """
+    # create workdir for each job
+    workdir = tmp_dir / "{}_{}".format(keyword, idx)
+    workdir.mkdir()
 
+    return workdir
+
+
+def create_xml_job_file(job: object, idx: str, workdir: Path) -> Path:
+    """
+    Create an xml file containing a single job
+    """
+    job_idx = "job_{}".format(idx)
+    job_file = workdir / (job_idx + '.xml')
+    create_job_file(job, job_file)
+
+    return job_file
 
 
 @schedule_hint()

@@ -220,6 +220,7 @@ def distribute_eqm_jobs(results: dict) -> dict:
 
 def write_output(output: dict, file_name: str="results.yml") -> None:
     """
+    Write the `output` dictionary in YAML format.
     """
     with open(file_name, 'w') as f:
         yaml.dump(to_posix(output), f, default_flow_style=False)
