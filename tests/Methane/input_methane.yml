@@ -15,6 +15,9 @@ trajectory:
 
 mp_files:
   "tests/Methane/MP_FILES"
+
+qc_files:
+  "tests/Methane/QC_FILES"
   
 xqmultipole_jobs: [1, 2, 3]
 
@@ -41,15 +44,15 @@ changeoptions:
     gwbse_options:
       "OPTIONFILES/mbgft.xml"
 
-  # xtpdft:
-  #   threads: 0
+  xtpdft:
+    threads: 0
   
-  # mbgft:
-  #   openmp: 0
-  #   range: full
+  mbgft:
+    openmp: 0
+    ranges: full
 
-  # esp2multipole:
-  #   openmp: 0
+  esp2multipole:
+    openmp: 0
 
   # iqm:
   #   bsecoupling_options: "OPTIONFILES/bsecoupling.xml"

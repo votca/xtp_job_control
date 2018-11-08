@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 from os.path import join
-from typing import (Dict, List)
+from typing import (Any, Dict, List)
 
 
 def edit_xml_options(options: Dict, path: str) -> Dict:
@@ -23,31 +23,36 @@ def edit_xml_file(path_file: str, xml_file: str, sections: Dict) -> dict:
     given in `sections` in the XML tree. Finally write
     the XML tree to the same file
     """
-    def update_node(path, val):
-        """Update node recursively"""
-        if not isinstance(val, dict):
-            node = root.find(path)
-            node.text = str(val)
-        else:
-            for key, x in val.items():
-                # Remove or update Leave
-                if key.lower() == 'delete_entry':
-                    node = root.find(path)
-                    leave = root.find(join(path, x))
-                    node.remove(leave)
-                else:
-                    update_node(join(path, key), x)
-
     # Parse XML Tree
     tree = ET.parse(path_file)
     root = tree.getroot()
     # Iterate over the sections to change
     for key, val in sections.items():
-        update_node(join(xml_file, key), val)
+        try:
+            update_node(join(xml_file, key), root, val)
+        except AttributeError:
+            update_node(key, root, val)
 
-    tree.write(path_file)
+    # write to the path_file the updated xml
+    tree.write(path_file, short_empty_elements=False)
 
     return path_file
+
+
+def update_node(path: str, root: object, val: Any):
+    """Update node recursively"""
+    if not isinstance(val, dict):
+        node = root.find(path)
+        node.text = str(val)
+    else:
+        for key, x in val.items():
+            # Remove or update Leave
+            if key.lower() == 'delete_entry':
+                node = root.find(path)
+                leave = root.find(join(path, x))
+                node.remove(leave)
+            else:
+                update_node(join(path, key), root, x)
 
 
 def edit_xml_job_file(path_file: str, jobs_to_run: List):

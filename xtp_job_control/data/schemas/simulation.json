@@ -28,6 +28,10 @@
 	    "type": "string",
 	    "description": "path to the folder containing the mp_files"
 	},
+	"qc_files": {
+	    "type": "string",
+	    "description": "path to the folder containing the qc_files"
+	},
 	"xqmultipole_jobs": {
 	    "type": ["array", "null"],
 	    "description": "jobs Only this set of Jobs",
@@ -87,6 +91,7 @@
 	"topology",
 	"trajectory",
 	"mp_files",
+	"qc_files",
 	"changeoptions"
   ]
 }

@@ -103,9 +103,19 @@ def edit_jobs_file(path: Path, jobs_to_run: List):
 
 
 @schedule_hint()
+def split_eqm_calculations(input_dict: dict) -> dict:
+    """
+    Split the jobs specified in xqmultipole in independent jobs then
+    gather the results
+    """
+    available_jobs = read_available_jobs(input_dict['xqmultipole_jobs'])
+
+
+
+@schedule_hint()
 def split_xqmultipole_calculations(input_dict: dict) -> dict:
     """
-    Split the jobs specified in xqmultipole in independent runs then
+    Split the jobs specified in xqmultipole in independent jobs then
     gather the results
     """
     available_jobs = read_available_jobs(input_dict['xqmultipole_jobs'])
@@ -144,20 +154,21 @@ def split_xqmultipole_calculations(input_dict: dict) -> dict:
     return {k: v for k, v in results.items()}
 
 
+
+
+
 @schedule_hint()
-def run_parallel_jobs(dict_input: dict, dict_jobs: dict) -> dict:
+def run_parallel_jobs(cmd: str, dict_jobs: dict, dict_input: dict) -> dict:
     """
     Run a set of jobs defined in `dict_jobs`.
     """
-    cmd_options = """-s 0 -t 1 -c 1000 -j "run" > xqmultipole.log"""
     state = dict_input['state']
     results = dict_jobs.copy()
     for key, job_info in dict_jobs.items():
-        cmd_parallel = """xtp_parallel -e xqmultipole -f {} -o {} """.format(
-            state, job_info['xqmultipole'].as_posix())
+        cmd_parallel = cmd.format(state, job_info['xqmultipole'].as_posix())
 
         # Call subprocess
-        output = run_command(cmd_parallel + cmd_options, job_info['workdir'], expected_output={
+        output = run_command(cmd_parallel, job_info['workdir'], expected_output={
             'tab': 'job_{}.tab'.format(key)})
         results['tab'] = output['tab']
 
