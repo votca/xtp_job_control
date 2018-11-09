@@ -2,7 +2,8 @@ from .runner import run
 from .input import validate_input
 from .worflow_components import (
     Results, call_xtp_cmd, create_promise_command,
-    edit_jobs_file, edit_options, run_parallel_jobs, split_xqmultipole_calculations)
+    edit_jobs_file, edit_options, rename_map_file, run_parallel_jobs,
+    split_xqmultipole_calculations)
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from noodles import (gather_dict, lift)
@@ -46,13 +47,17 @@ def create_workflow_simulation(options: Dict) -> object:
     # create results object
     results = Results({'options': options.copy()})
 
+    # Adjust links in the system.xml file
+    results['job_system'] = edit_system_options(results)
+
     # Step state
     # runs the mapping from MD coordinates to segments and creates .sql file
     # you can explore the created .sql file with e.g. sqlitebrowser
     path_state = workdir / "state.sql"
     args = create_promise_command(
         "xtp_map -t {} -c {} -s {} -f {}",
-        options['topology'], options['trajectory'], options['system'], path_state)
+        options['topology'], options['trajectory'],
+        results['job_system']['system'], path_state)
 
     # calls something like:
     # xtp_map -t MD_FILES/topol.tpr -c MD_FILES/conf.gro -s system.xml -f state.sql
@@ -96,6 +101,21 @@ def create_workflow_simulation(options: Dict) -> object:
     write_output(output)
 
     print("check output file: results.yml")
+
+
+def edit_system_options(results: dict) -> dict:
+    """
+    Adjust the links inside the system.xml file.
+    """
+    mp_files = results['options']['mp_files'].absolute().as_posix()
+    system_options = {
+        'system': {
+            'molecules': {"replace_regex_recursively":
+                          ('MP_FILES', mp_files)}}
+    }
+
+    return edit_options(
+        system_options, ['system'], results['options']['scratch_dir'])
 
 
 def run_einternal(results: dict) -> dict:
@@ -183,6 +203,11 @@ def run_config_xqmultipole(results: dict) -> dict:
             'mps_tab': 'jobwriter.mps.background.tab',
             'xqmultipole_jobs': 'jobwriter.mps.monomer.xml'})
 
+    # change path of the MP_FILES
+    mp_files = results['options']['mp_files'].absolute().as_posix()
+    results['job_setup_xqmultipole']['mps_tab'] = rename_map_file(
+        results['job_setup_xqmultipole']['mps_tab'], "MP_FILES", mp_files)
+
     # step 6
     # Allow only the first 3 jobs to run
     return edit_jobs_file(
@@ -199,7 +224,7 @@ def distribute_xqmultipole_jobs(options: dict, results: dict) -> dict:
         'mp_files': options['mp_files'],
         'xqmultipole_jobs': results['job_setup_xqmultipole']['xqmultipole_jobs'],
         'xqmultipole': results['job_opts_xqmultipole']['xqmultipole'],
-        'system': options['system'],
+        'system': results['job_system']['system'],
         'state': results['job_state']['state'],
         'mps_tab': results['job_setup_xqmultipole']['mps_tab']
 
@@ -248,8 +273,8 @@ def initial_config(options: Dict) -> Dict:
     """
     config_logger(options['workdir'])
     ts = datetime.datetime.now().timestamp()
-    prefix = 'xtp_' + str(ts)
-    scratch_dir = Path(tempfile.mkdtemp(prefix=prefix))
+    scratch_dir = tempfile.gettempdir() / Path('xtp_' + str(ts))
+    scratch_dir.mkdir()
 
     # Option files
     optionfiles = scratch_dir / 'OPTIONFILES'
@@ -264,9 +289,15 @@ def initial_config(options: Dict) -> Dict:
     # Copy input provided by the user to tempfolder
     d = options.copy()
     for key, val in d.items():
-        if isinstance(val, str) and os.path.isfile(val):
-            shutil.copy(val, scratch_dir)
-            options[key] = scratch_dir / Path(val).name
+        if isinstance(val, str) and 'votca' not in val.lower():
+            path = Path(val)
+            abs_path = scratch_dir / path.name
+            if path.is_file():
+                shutil.copy(path.as_posix(), scratch_dir)
+                options[key] = abs_path
+            elif path.is_dir() and not abs_path.exists():
+                shutil.copytree(path.as_posix(), abs_path.as_posix())
+                options[key] = abs_path
 
     dict_config = {
         'scratch_dir': scratch_dir, 'path_optionfiles': optionfiles}

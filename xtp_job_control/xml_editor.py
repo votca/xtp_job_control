@@ -1,3 +1,5 @@
+import os
+import re
 import xml.etree.ElementTree as ET
 from os.path import join
 from typing import (Any, Dict, List)
@@ -41,18 +43,32 @@ def edit_xml_file(path_file: str, xml_file: str, sections: Dict) -> dict:
 
 def update_node(path: str, root: object, val: Any):
     """Update node recursively"""
+    node = root.find(path)
     if not isinstance(val, dict):
-        node = root.find(path)
         node.text = str(val)
     else:
         for key, x in val.items():
             # Remove or update Leave
             if key.lower() == 'delete_entry':
-                node = root.find(path)
                 leave = root.find(join(path, x))
                 node.remove(leave)
+            elif key.lower() == 'replace_regex':
+                regex, new_val = x
+                node.text = re.sub(regex, new_val, node.text)
+            elif key.lower() == 'replace_regex_recursively':
+                regex, new_val = x
+                regex = re.compile(regex)
+                replace_regex_recursively(root, regex, new_val)
             else:
                 update_node(join(path, key), root, x)
+
+
+def replace_regex_recursively(tree: object, regex: object, path_file: str) -> None:
+    """
+    replace a regex in all the xml tree recursively.
+    """
+    for elem in tree.iter():
+        elem.text = re.sub(regex, path_file, elem.text)
 
 
 def edit_xml_job_file(path_file: str, jobs_to_run: List):
