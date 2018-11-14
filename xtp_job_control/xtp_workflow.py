@@ -3,7 +3,7 @@ from .input import validate_input
 from .worflow_components import (
     Results, call_xtp_cmd, create_promise_command,
     edit_jobs_file, edit_options, rename_map_file, run_parallel_jobs,
-    split_xqmultipole_calculations)
+    split_eqm_calculations, split_xqmultipole_calculations)
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from noodles import (gather_dict, lift)
@@ -84,7 +84,7 @@ def create_workflow_simulation(options: Dict) -> object:
     results['job_select_xqmultipole_jobs'] = run_config_xqmultipole(results)
 
     # Run xqmultipole jobs in parallel
-    results['jobs_xqmultipole'] = distribute_xqmultipole_jobs(options, results)
+    results['jobs_xqmultipole'] = distribute_xqmultipole_jobs(results)
 
     # step eanalyze
     results['job_eanalyze'] = run_eanalyze(results)
@@ -185,6 +185,8 @@ def run_eqm(results: dict) -> dict:
         results['job_setup_eqm']['eqm_jobs'],
         results['options']['eqm_jobs'])
 
+    results['jobs_eqm'] = distribute_eqm_jobs(results)
+
     return results
 
 
@@ -215,32 +217,46 @@ def run_config_xqmultipole(results: dict) -> dict:
         results['options']['xqmultipole_jobs'])
 
 
-def distribute_xqmultipole_jobs(options: dict, results: dict) -> dict:
+def distribute_xqmultipole_jobs(results: dict) -> dict:
     """
     Run the xqmultipole_jobs in separated folders
     """
-    split_input = {
-        'scratch_dir': options['scratch_dir'],
-        'mp_files': options['mp_files'],
+    dict_input = {
+        'name': 'xqmultipole',
+        'scratch_dir': results['options']['scratch_dir'],
+        'mp_files': results['options']['mp_files'],
         'xqmultipole_jobs': results['job_setup_xqmultipole']['xqmultipole_jobs'],
         'xqmultipole': results['job_opts_xqmultipole']['xqmultipole'],
         'system': results['job_system']['system'],
         'state': results['job_state']['state'],
-        'mps_tab': results['job_setup_xqmultipole']['mps_tab']
+        'mps_tab': results['job_setup_xqmultipole']['mps_tab'],
+        'cmd_options': "-s 0 -t 1 -c 1000 -j run > xqmultipole.log",
+        'expected_output': {'tab': 'job.tab'}
 
     }
-    dict_jobs = split_xqmultipole_calculations(lift(split_input))
-    cmd = """xtp_parallel -e xqmultipole -f {} -o {} -s 0 -t 1 -c 1000 -j run > xqmultipole.log"""
+    dict_jobs = split_xqmultipole_calculations(lift(dict_input))
 
-    return run_parallel_jobs(cmd, dict_jobs, lift(split_input))
+    return run_parallel_jobs(dict_jobs, lift(dict_input))
 
 
 def distribute_eqm_jobs(results: dict) -> dict:
     """
     Run the eqm job in separated folders
     """
-    pass
-    # dict_jobs = split_jobs()
+    dict_input = {
+        'name': 'eqm',
+        'scratch_dir': results['options']['scratch_dir'],
+        'eqm_jobs': results['job_setup_eqm']['eqm_jobs'],
+        'state': results['job_state']['state'],
+        'eqm': results['job_opts_eqm']['eqm'],
+        'path_optionfiles': results['options']['path_optionfiles'],
+        'cmd_options': "-s 0 -j run -c 1 -t 1",
+        'expected_output': {
+            'tab': 'job.tab', 'orb': 'system.orb'}
+    }
+    dict_jobs = split_eqm_calculations(lift(dict_input))
+
+    return run_parallel_jobs(dict_jobs, lift(dict_input))
 
 
 def write_output(output: dict, file_name: str="results.yml") -> None:

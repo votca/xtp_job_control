@@ -1,7 +1,7 @@
 from .xml_editor import (
     create_job_file, edit_xml_job_file, edit_xml_options, read_available_jobs)
 from collections import defaultdict
-from noodles import (schedule, schedule_hint, has_scheduled_methods)
+from noodles import (gather_dict, schedule, schedule_hint, has_scheduled_methods)
 from noodles.interface import PromisedObject
 from pathlib import Path
 from subprocess import (PIPE, Popen)
@@ -104,46 +104,49 @@ def edit_jobs_file(path: Path, jobs_to_run: List):
 
 
 @schedule_hint()
-def split_eqm_calculations(input_dict: dict) -> dict:
+def run_parallel_jobs(dict_jobs: dict, dict_input: dict) -> dict:
     """
-    Split the jobs specified in xqmultipole in independent jobs then
-    gather the results
+    Run a set of jobs defined in `dict_jobs` using the options specified
+    in dict_input.
     """
-    pass
+    state = dict_input['state']
+    # Name of the job to run
+    name = dict_input['name']
+
+    cmd_options = dict_input['cmd_options']
+    # Add command to run
+    results = dict_jobs.copy()
+    for key, job_info in dict_jobs.items():
+        input_xml = job_info[name].as_posix()
+        cmd_parallel = "xtp_parallel -e {} -f {} -o {} ".format(name, state, input_xml)
+        # Call subprocess
+        output = run_command(
+            cmd_parallel + cmd_options, job_info['workdir'],
+            expected_output=dict_input['expected_output'])
+        for k, val in output.items():
+            results[key][k] = val
+
+    return results
 
 
 @schedule_hint()
 def split_xqmultipole_calculations(input_dict: dict) -> dict:
     """
-    Split the jobs specified in xqmultipole in independent jobs then
-    gather the results
+    Split the jobs specified in xqmultipole into independent jobs.
     """
-    # Make a different folder for each job
-    tmp_dir = create_workdir(input_dict['scratch_dir'], 'xqmultipole_jobs')
+    results = split_calculations(input_dict, 'xqmultipole_jobs')
 
-    # Copy job dependencies to a new folder
-    results = defaultdict(dict)
-    for job in read_available_jobs(input_dict['xqmultipole_jobs']):
-        # identifier
-        idx = job.find('id').text
-
-        name = "{}_{}".format('xqmultipole_job', idx)
-        workdir = create_workdir(tmp_dir, name)
-        results[idx]['workdir'] = workdir
-
-        # Job files
-        job_file = create_xml_job_file(job, workdir)
-
-        # replace references inside xqmultipole.xml and job.xmlx
-        shutil.copy(input_dict['xqmultipole'], workdir.as_posix())
+    for idx, config in results.items():
+        workdir = config['workdir']
 
         # Replace path to MP_FILES
         mp_files = input_dict['mp_files'].absolute().as_posix()
 
+        # replace references inside xqmultipole.xml and job.xml
         options = {
             'xqmultipole':
             {'multipoles': input_dict['system'].as_posix(),
-             'control': {'job_file': job_file.name,
+             'control': {'job_file': config['job'].name,
                          'emp_file': input_dict['mps_tab'].as_posix()}},
             'job': {'input': {
                 'replace_regex': ('MP_FILES', mp_files)}}
@@ -153,6 +156,56 @@ def split_xqmultipole_calculations(input_dict: dict) -> dict:
         results[idx]['job'] = edited_files['job']
 
     return {k: v for k, v in results.items()}
+
+
+@schedule_hint()
+def split_eqm_calculations(input_dict: dict) -> dict:
+    """
+    Split the jobs specified in eqm.jobs into independent jobs.
+    """
+    results = split_calculations(input_dict, 'eqm_jobs')
+    path_optionfiles = input_dict['path_optionfiles'].as_posix()
+
+    for idx, config in results.items():
+        workdir = config['workdir']
+        options = {
+            'eqm': {
+                'job_file': config['job'].name,
+                '': {'replace_regex_recursively':
+                     ('OPTIONFILES', path_optionfiles)}
+            }
+        }
+        edited_files = edit_xml_options(options, workdir)
+        results[idx]['eqm'] = edited_files['eqm']
+
+    return {k: v for k, v in results.items()}
+
+
+def split_calculations(input_dict: dict, jobs_name: str) -> dict:
+    """
+    Split the jobs specified in a xml file in independent jobs that
+    run independentely.
+    """
+    tmp_dir = create_workdir(input_dict['scratch_dir'], jobs_name)
+
+    # Copy job dependencies to a new folder
+    results = defaultdict(dict)
+    for job in read_available_jobs(input_dict[jobs_name]):
+        # identifier
+        idx = job.find('id').text
+
+        name = "{}_{}".format('job', idx)
+        workdir = create_workdir(tmp_dir, name)
+        results[idx]['workdir'] = workdir
+
+        # Job files
+        results[idx]['job'] = create_xml_job_file(job, workdir)
+
+        # Move input option file to workdir
+        name = input_dict['name']
+        shutil.copy(input_dict[name], workdir.as_posix())
+
+    return results
 
 
 def create_workdir(tmp_dir: Path, name: str):
@@ -174,24 +227,6 @@ def create_xml_job_file(job: object, workdir: Path) -> Path:
     create_job_file(job, job_file)
 
     return job_file
-
-
-@schedule_hint()
-def run_parallel_jobs(cmd: str, dict_jobs: dict, dict_input: dict) -> dict:
-    """
-    Run a set of jobs defined in `dict_jobs`.
-    """
-    state = dict_input['state']
-    results = dict_jobs.copy()
-    for key, job_info in dict_jobs.items():
-        cmd_parallel = cmd.format(state, job_info['xqmultipole'].as_posix())
-
-        # Call subprocess
-        output = run_command(cmd_parallel, job_info['workdir'], expected_output={
-            'tab': 'job_{}.tab'.format(key)})
-        results['tab'] = output['tab']
-
-    return results
 
 
 @schedule_hint()
