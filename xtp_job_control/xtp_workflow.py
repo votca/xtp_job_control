@@ -1,7 +1,7 @@
 from .runner import run
 from .input import validate_input
 from .worflow_components import (
-    Results, call_xtp_cmd, create_promise_command,
+    Results, as_posix, call_xtp_cmd, create_promise_command,
     edit_jobs_file, edit_options, rename_map_file, run_parallel_jobs,
     split_eqm_calculations, split_xqmultipole_calculations)
 from distutils.dir_util import copy_tree
@@ -95,6 +95,8 @@ def create_workflow_simulation(options: Dict) -> object:
     results = run_eqm(results)
 
     # step iqm
+    results['job_opts_iqm'] = edit_options(
+        changeoptions, ['iqm'], path_optionfiles)
 
     # RUN the workflow
     output = run(gather_dict(**results.state))
@@ -295,12 +297,21 @@ def initial_config(options: Dict) -> Dict:
     # Option files
     optionfiles = scratch_dir / 'OPTIONFILES'
     optionfiles.mkdir()
+    posix_optionfiles = optionfiles.as_posix()
 
     # Copy option files to temp file
     path_votcashare = Path(options['path_votcashare'])
     copy_tree(path_votcashare / 'xtp/xml', optionfiles.as_posix())
-    shutil.copy(path_votcashare / 'ctp/xml/xqmultipole.xml', optionfiles)
-    copy_tree(path_votcashare / 'xtp/packages', optionfiles.as_posix())
+    shutil.copy(path_votcashare / 'ctp/xml/xqmultipole.xml', posix_optionfiles)
+    copy_tree(path_votcashare / 'xtp/packages', posix_optionfiles)
+
+    if 'copy_option_files' in options:
+        src = options['copy_option_files']['src']
+        dst = options['copy_option_files']['dst']
+        for s, d in zip(src, dst):
+            shutil.copyfile(
+                as_posix(optionfiles / s),
+                as_posix(optionfiles / d))
 
     # Copy input provided by the user to tempfolder
     d = options.copy()

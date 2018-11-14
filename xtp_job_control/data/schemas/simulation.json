@@ -42,6 +42,20 @@
 	    "description": "number of eqm jobs to run. If null run all",
 	    "default": null
 	},
+	"copy_option_files": {
+	    "type": "object",
+	    "description": "Copy files from src to dest",
+	    "properties": {
+		"src": {
+		    "type": "array",
+		    "description": "Source files"
+		},
+		"dst": {
+		    "type": "array",
+		    "description": "Destination files"
+		}
+	    }
+	},
 	"changeoptions": {
 	    "type": "object",
 	    "description": "options to change from default templates",

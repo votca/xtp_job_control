@@ -25,6 +25,15 @@ xqmultipole_jobs: [1, 2, 3]
 # Run only the first 2 jobs
 eqm_jobs: [1, 2]
 
+# Copy xml files
+copy_option_files:
+    src:
+      - mbgft.xml
+      - xtpdft.xml
+    dst:
+      - mbgft_pair.xml
+      - xtpdft_pair.xml
+
 changeoptions:
   neighborlist:
     constant: 0.6
@@ -58,15 +67,16 @@ changeoptions:
   esp2multipole:
     openmp: 0
 
-  # iqm:
-  #   bsecoupling_options: "OPTIONFILES/bsecoupling.xml"
-  #   dftpackage: "OPTIONFILES/xtpdft_pair.xml"
-  #   gwbse_options: "OPTIONFILES/mbgft_pair.xml"
+  iqm:
+    bsecoupling_options: "OPTIONFILES/bsecoupling.xml"
+    dftpackage: "OPTIONFILES/xtpdft_pair.xml"
+    gwbse_options: "OPTIONFILES/mbgft_pair.xml"
 
-  #   singlet: "Methane:s1"
-  #   triplet: "Methane:t1"
-  #   electron: "Methane:e1"
-  #   hole: "Methane:h1"
+    readjobfile:
+      singlet: "Methane:s1"
+      triplet: "Methane:t1"
+      electron: "Methane:e1"
+      hole: "Methane:h1"
 
   # xtpdft_pair:
   #   read_guess: 1
@@ -77,8 +87,9 @@ changeoptions:
   #   ranges: full
   #   openmp: 0
   #   tasks: "singlets,triplets,iqm"
-  # bsecoupling:
-  #   openmp: 0
+
+  bsecoupling:
+    openmp: 0
 
   # jobwriter_qmmm:
   #   keys: "mps.monomer mps.background"

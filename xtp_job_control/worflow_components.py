@@ -1,7 +1,7 @@
 from .xml_editor import (
     create_job_file, edit_xml_job_file, edit_xml_options, read_available_jobs)
 from collections import defaultdict
-from noodles import (gather_dict, schedule, schedule_hint, has_scheduled_methods)
+from noodles import (schedule, schedule_hint, has_scheduled_methods)
 from noodles.interface import PromisedObject
 from pathlib import Path
 from subprocess import (PIPE, Popen)
@@ -244,3 +244,11 @@ def rename_map_file(path_file: Path, expression: str, new_val: str):
         f.write(re.sub(regex, new_val, xs))
 
     return path_file
+
+
+def as_posix(path: Path) -> str:
+    """
+    Call the `as_posix` method from a `Path` object using
+    function notation
+    """
+    return getattr(path, 'as_posix')()
