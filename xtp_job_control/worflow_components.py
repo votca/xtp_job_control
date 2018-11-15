@@ -33,7 +33,6 @@ class Results(dict):
         self.state[key] = val
 
     def __deepcopy__(self, _):
-        print("calling deep")
         return Results(self.state.copy())
 
 
@@ -181,10 +180,30 @@ def split_eqm_calculations(input_dict: dict) -> dict:
     return {k: v for k, v in results.items()}
 
 
+@schedule_hint()
+def split_iqm_calculations(input_dict: dict) -> dict:
+    """
+    Split the jobs specified in iqm.jobs into independent jobs.
+    """
+    results = split_calculations(input_dict, 'iqm_jobs')
+
+    for idx, config in results.items():
+        workdir = config['workdir']
+        options = {
+            'iqm': {
+                'job_file': config['job'].name,
+            }
+        }
+        edited_files = edit_xml_options(options, workdir)
+        results[idx]['iqm'] = edited_files['iqm']
+
+    return {k: v for k, v in results.items()}
+
+
 def split_calculations(input_dict: dict, jobs_name: str) -> dict:
     """
     Split the jobs specified in a xml file in independent jobs that
-    run independentely.
+    run independently.
     """
     tmp_dir = create_workdir(input_dict['scratch_dir'], jobs_name)
 

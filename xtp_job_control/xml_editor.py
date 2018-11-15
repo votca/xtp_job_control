@@ -1,4 +1,3 @@
-import os
 import re
 import xml.etree.ElementTree as ET
 from os.path import join
@@ -68,7 +67,8 @@ def replace_regex_recursively(tree: object, regex: object, path_file: str) -> No
     replace a regex in all the xml tree recursively.
     """
     for elem in tree.iter():
-        elem.text = re.sub(regex, path_file, elem.text)
+        if elem.text is not None:
+            elem.text = re.sub(regex, path_file, elem.text)
 
 
 def edit_xml_job_file(path_file: str, jobs_to_run: List):

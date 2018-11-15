@@ -3,11 +3,12 @@ from .input import validate_input
 from .worflow_components import (
     Results, as_posix, call_xtp_cmd, create_promise_command,
     edit_jobs_file, edit_options, rename_map_file, run_parallel_jobs,
-    split_eqm_calculations, split_xqmultipole_calculations)
+    split_eqm_calculations, split_iqm_calculations, split_xqmultipole_calculations)
+from .xml_editor import (edit_xml_file)
 from distutils.dir_util import copy_tree
 from pathlib import Path
-from noodles import (gather_dict, lift)
-from typing import Dict
+from noodles import (gather_dict, lift, schedule)
+from typing import (Callable, Dict)
 import datetime
 import logging
 import os
@@ -87,16 +88,22 @@ def create_workflow_simulation(options: Dict) -> object:
     results['jobs_xqmultipole'] = distribute_xqmultipole_jobs(results)
 
     # step eanalyze
-    results['job_eanalyze'] = run_eanalyze(results)
+    eanalyze_file = path_optionfiles / "eanalyze.xml"
+    results['job_eanalyze'] = run_analyze(results, eanalyze_file)
 
     # step eqm
     results['job_opts_eqm'] = edit_options(
         changeoptions, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'], path_optionfiles)
-    results = run_eqm(results)
+    results['jobs_eqm'] = run_eqm(results)
 
     # step iqm
     results['job_opts_iqm'] = edit_options(
-        changeoptions, ['iqm'], path_optionfiles)
+        changeoptions, ['iqm', 'xtpdft_pair', 'mbgft_pair'], path_optionfiles)
+    results['jobs_iqm'] = run_iqm(results)
+
+    # # step ianalyze
+    # ianalyze_file = path_optionfiles / "ianalyze.xml"
+    # results['job_ianalyze'] = run_analyze(results, ianalyze_file)
 
     # RUN the workflow
     output = run(gather_dict(**results.state))
@@ -151,21 +158,22 @@ def run_neighborlist(results: dict) -> dict:
     """
     cmd_neighborlist = create_promise_command(
         "xtp_run -e neighborlist -o {} -f {}",
-        results['job_opts_neighborlist']['neighborlist'], results['job_state']['state'])
+        results['job_opts_neighborlist']['neighborlist'],
+        results['job_state']['state'])
 
     return call_xtp_cmd(
         cmd_neighborlist, results['options']['scratch_dir'], expected_output={
-            'neighborlist': "OPTIONFILES/neighborlist.xml"})
+            'neighborlist': "OPTIONFILES/neighborlist.xml",
+            'state': 'state.sql'})
 
 
-def run_eanalyze(results: dict) -> Dict:
+def run_analyze(results: dict, analyze_file: Path) -> Dict:
     """
     call eanalyze tool.
     """
     workdir = results['options']['scratch_dir']
-    eanalyze_file = results['options']['path_optionfiles'] / "eanalyze.xml"
     cmd_eanalyze = create_promise_command(
-        "xtp_run -e eanalyze -o {} -f {}", eanalyze_file, results['job_state']['state'])
+        "xtp_run -e eanalyze -o {} -f {}", analyze_file, results['job_state']['state'])
     return call_xtp_cmd(cmd_eanalyze, workdir / 'eanalyze', expected_output={
         'sitecorr': "eanalyze.sitecorr*out",
         'sitehist': "eanalyze.sitehist*out"})
@@ -175,11 +183,11 @@ def run_eqm(results: dict) -> dict:
     """
     Run the eqm jobs.
     """
-    cmd_eqm = create_promise_command(
+    cmd_eqm_write = create_promise_command(
         "xtp_parallel -e eqm -o {} -f {} -s 0 -j write", results['job_opts_eqm']['eqm'],
         results['job_state']['state'])
     results['job_setup_eqm'] = call_xtp_cmd(
-        cmd_eqm, results['options']['scratch_dir'],
+        cmd_eqm_write, results['options']['scratch_dir'],
         expected_output={"eqm_jobs": "eqm.jobs"})
 
     # Select the number of jobs to run based on the input provided by the user
@@ -187,9 +195,41 @@ def run_eqm(results: dict) -> dict:
         results['job_setup_eqm']['eqm_jobs'],
         results['options']['eqm_jobs'])
 
-    results['jobs_eqm'] = distribute_eqm_jobs(results)
+    return distribute_eqm_jobs(results)
 
-    return results
+
+def run_iqm(results: dict) -> dict:
+    """
+    Run the eqm jobs.
+    """
+    # replace optionfiles with its absolute path
+    path_optionfiles = results['options']['path_optionfiles']
+    sections_to_edit = {
+            '': {
+                'replace_regex_recursively':
+                ('OPTIONFILES', as_posix(path_optionfiles))}
+        }
+
+    edited_iqm_file = schedule(edit_xml_file)(
+        results['job_opts_iqm']['iqm'], 'iqm', sections_to_edit)
+
+    # write into state
+    cmd_iqm_write = create_promise_command(
+        "xtp_parallel -e iqm -o {} -f {} -s 0 -j write", edited_iqm_file,
+        results['job_neighborlist']['state']
+    )
+
+    results['job_setup_iqm'] = call_xtp_cmd(
+        cmd_iqm_write, results['options']['scratch_dir'] / 'iqm', expected_output={
+            'iqm_jobs': "iqm.jobs"}
+    )
+
+    # Select the number of jobs to run based on the input provided by the user
+    results['job_select_iqm_jobs'] = edit_jobs_file(
+        results['job_setup_iqm']['iqm_jobs'],
+        results['options']['iqm_jobs'])
+
+    return distribute_iqm_jobs(results)
 
 
 def run_config_xqmultipole(results: dict) -> dict:
@@ -212,16 +252,24 @@ def run_config_xqmultipole(results: dict) -> dict:
     results['job_setup_xqmultipole']['mps_tab'] = rename_map_file(
         results['job_setup_xqmultipole']['mps_tab'], "MP_FILES", mp_files)
 
-    # step 6
-    # Allow only the first 3 jobs to run
+    # Run only the jobs specified by the user
     return edit_jobs_file(
         results['job_setup_xqmultipole']['xqmultipole_jobs'],
         results['options']['xqmultipole_jobs'])
 
 
+def distribute_job(dict_input: dict, split_function: Callable) -> dict:
+    """
+    Using the jobs and parameters defined in `dict_input` create
+    a set of independent jobs.
+    """
+    dict_jobs = split_function(lift(dict_input))
+    return run_parallel_jobs(dict_jobs, lift(dict_input))
+
+
 def distribute_xqmultipole_jobs(results: dict) -> dict:
     """
-    Run the xqmultipole_jobs in separated folders
+    Run the xqmultipole_jobs independently
     """
     dict_input = {
         'name': 'xqmultipole',
@@ -236,9 +284,7 @@ def distribute_xqmultipole_jobs(results: dict) -> dict:
         'expected_output': {'tab': 'job.tab'}
 
     }
-    dict_jobs = split_xqmultipole_calculations(lift(dict_input))
-
-    return run_parallel_jobs(dict_jobs, lift(dict_input))
+    return distribute_job(dict_input, split_xqmultipole_calculations)
 
 
 def distribute_eqm_jobs(results: dict) -> dict:
@@ -256,9 +302,31 @@ def distribute_eqm_jobs(results: dict) -> dict:
         'expected_output': {
             'tab': 'job.tab', 'orb': 'system.orb'}
     }
-    dict_jobs = split_eqm_calculations(lift(dict_input))
+    return distribute_job(dict_input, split_eqm_calculations)
 
-    return run_parallel_jobs(dict_jobs, lift(dict_input))
+
+def distribute_iqm_jobs(results: dict) -> dict:
+    """
+    Run the iqm jobs independently
+    """
+    dict_input = {
+        'name': 'iqm',
+        'scratch_dir': results['options']['scratch_dir'],
+        'iqm_jobs': results['job_setup_iqm']['iqm_jobs'],
+        'state': results['job_neighborlist']['state'],
+        'iqm': results['job_opts_iqm']['iqm'],
+        'path_optionfiles': results['options']['path_optionfiles'],
+        'cmd_options': "-s 0 -j run -c 1 -t 1",
+        'expected_output': {
+            'tab': 'job.tab'
+        }
+    }
+
+    dict_read = dict_input.copy()
+    dict_read['cmd_options'] = " -j read"
+    dict_read['expected_output'] = None
+
+    return distribute_job(dict_input, split_iqm_calculations)
 
 
 def write_output(output: dict, file_name: str="results.yml") -> None:

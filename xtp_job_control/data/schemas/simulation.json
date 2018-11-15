@@ -42,6 +42,11 @@
 	    "description": "number of eqm jobs to run. If null run all",
 	    "default": null
 	},
+	"iqm_jobs": {
+	    "type": ["array", "null"],
+	    "description": "number of iqm jobs to run. If null run all",
+	    "default": null
+	},
 	"copy_option_files": {
 	    "type": "object",
 	    "description": "Copy files from src to dest",

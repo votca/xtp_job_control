@@ -6,7 +6,7 @@ system:
 
 path_votcashare:
   "/home/felipe/modules/votca/votca_dev/share/votca"
-  
+
 topology:
   "tests/Methane/MD_FILES/topol.tpr"
 
@@ -24,6 +24,9 @@ xqmultipole_jobs: [1, 2, 3]
 
 # Run only the first 2 jobs
 eqm_jobs: [1, 2]
+
+# Run only the first job
+iqm_jobs: [1]
 
 # Copy xml files
 copy_option_files:
@@ -78,15 +81,16 @@ changeoptions:
       electron: "Methane:e1"
       hole: "Methane:h1"
 
-  # xtpdft_pair:
-  #   read_guess: 1
-  #   energy: 1e-2
-  #   threads: 0
+  xtpdft_pair:
+    read_guess: 1
+    threads: 0
+    convergence:
+      energy: 1e-2
 
-  # mbgft_pair:
-  #   ranges: full
-  #   openmp: 0
-  #   tasks: "singlets,triplets,iqm"
+  mbgft_pair:
+    ranges: full
+    openmp: 0
+    tasks: "singlets,triplets,iqm"
 
   bsecoupling:
     openmp: 0
