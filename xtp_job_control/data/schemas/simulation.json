@@ -112,10 +112,6 @@
     "required": [
 	"path_votcashare",
 	"system",
-	"topology",
-	"trajectory",
-	"mp_files",
-	"qc_files",
 	"changeoptions"
   ]
 }
