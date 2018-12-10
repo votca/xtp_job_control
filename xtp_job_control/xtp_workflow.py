@@ -25,7 +25,7 @@ def xtp_workflow(options: Dict):
     Workflow to run a complete xtp ssimulation using `options`.
     """
     # validate_input
-    input_dict = validate_input(options['input_file'])
+    input_dict = recursively_create_path(validate_input(options['input_file']))
 
     # Merge inputs
     options.update(input_dict)
@@ -35,6 +35,20 @@ def xtp_workflow(options: Dict):
 
     # Create graph of dependencies
     create_workflow_simulation(options)
+
+
+def recursively_create_path(dict_input):
+    """
+    Convert all the entries of the dict_input that are file into Path objects.
+    """
+    for key, val in dict_input.items():
+        if isinstance(val, str):
+            if os.path.isdir(val) or os.path.isfile(val):
+                dict_input[key] = Path(val)
+        if isinstance(val, dict):
+            dict_input[key] = recursively_create_path(val)
+
+    return dict_input
 
 
 def create_workflow_simulation(options: Dict) -> object:
@@ -368,7 +382,7 @@ def initial_config(options: Dict) -> Dict:
     posix_optionfiles = optionfiles.as_posix()
 
     # Copy option files to temp file
-    path_votcashare = Path(options['path_votcashare'])
+    path_votcashare = options['path_votcashare']
     copy_tree(path_votcashare / 'xtp/xml', optionfiles.as_posix())
     shutil.copy(path_votcashare / 'ctp/xml/xqmultipole.xml', posix_optionfiles)
     copy_tree(path_votcashare / 'xtp/packages', posix_optionfiles)
@@ -383,9 +397,8 @@ def initial_config(options: Dict) -> Dict:
 
     # Copy input provided by the user to tempfolder
     d = options.copy()
-    for key, val in d.items():
-        if isinstance(val, str) and 'votca' not in val.lower():
-            path = Path(val)
+    for key, path in d.items():
+        if isinstance(path, Path) and 'votca' not in path.name.lower():
             abs_path = scratch_dir / path.name
             if path.is_file():
                 shutil.copy(path.as_posix(), scratch_dir)
