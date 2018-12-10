@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from xtp_job_control import xtp_workflow
 import argparse
 
