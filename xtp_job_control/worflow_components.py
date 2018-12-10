@@ -1,7 +1,7 @@
 from .xml_editor import (
     create_job_file, edit_xml_job_file, edit_xml_options, read_available_jobs)
 from collections import defaultdict
-from noodles import (schedule, schedule_hint, has_scheduled_methods)
+from noodles import (schedule, has_scheduled_methods)
 from noodles.interface import PromisedObject
 from pathlib import Path
 from subprocess import (PIPE, Popen)
@@ -36,7 +36,7 @@ class Results(dict):
         return Results(self.state.copy())
 
 
-@schedule_hint()
+@schedule
 def call_xtp_cmd(cmd: str, workdir: str, expected_output: dict=None):
     """
     Run a bash `cmd` in the `cwd` folder and search for a list of `expected_output`
@@ -76,7 +76,7 @@ def retrieve_ouput(workdir: str, expected_file: str) -> str:
         return list(workdir.rglob(expected_file))
 
 
-@schedule_hint()
+@schedule
 def edit_options(options: Dict, names_xml_files: List,  path_optionfiles: str) -> Dict:
     """
     Edit a list of XML files `names_xml_files` that are located in the
@@ -86,7 +86,7 @@ def edit_options(options: Dict, names_xml_files: List,  path_optionfiles: str) -
     return edit_xml_options(sections_to_edit, path_optionfiles)
 
 
-@schedule_hint()
+@schedule
 def create_promise_command(string: str, *args) -> str:
     """Use a `string` as template command and fill in the options using
     possible promised `args`
@@ -94,7 +94,7 @@ def create_promise_command(string: str, *args) -> str:
     return string.format(*args)
 
 
-@schedule_hint()
+@schedule
 def edit_jobs_file(path: Path, jobs_to_run: List):
     """
     Run only the jobs listed in jobs_to_run
@@ -102,7 +102,7 @@ def edit_jobs_file(path: Path, jobs_to_run: List):
     return {path.stem: edit_xml_job_file(path, jobs_to_run)}
 
 
-@schedule_hint()
+@schedule
 def run_parallel_jobs(dict_jobs: dict, dict_input: dict) -> dict:
     """
     Run a set of jobs defined in `dict_jobs` using the options specified
@@ -128,7 +128,7 @@ def run_parallel_jobs(dict_jobs: dict, dict_input: dict) -> dict:
     return results
 
 
-@schedule_hint()
+@schedule
 def split_xqmultipole_calculations(input_dict: dict) -> dict:
     """
     Split the jobs specified in xqmultipole into independent jobs.
@@ -157,7 +157,7 @@ def split_xqmultipole_calculations(input_dict: dict) -> dict:
     return {k: v for k, v in results.items()}
 
 
-@schedule_hint()
+@schedule
 def split_eqm_calculations(input_dict: dict) -> dict:
     """
     Split the jobs specified in eqm.jobs into independent jobs.
@@ -180,7 +180,7 @@ def split_eqm_calculations(input_dict: dict) -> dict:
     return {k: v for k, v in results.items()}
 
 
-@schedule_hint()
+@schedule
 def split_iqm_calculations(input_dict: dict) -> dict:
     """
     Split the jobs specified in iqm.jobs into independent jobs.
@@ -248,7 +248,7 @@ def create_xml_job_file(job: object, workdir: Path) -> Path:
     return job_file
 
 
-@schedule_hint()
+@schedule
 def rename_map_file(path_file: Path, expression: str, new_val: str):
     """
     Replace the regex `expression` with `new_val` in the `file_path`.
