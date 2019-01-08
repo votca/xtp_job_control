@@ -7,3 +7,7 @@ python:
 
 install:
   - pip install .[test]
+
+scripts:
+  - pytest tests
+  - - coverage xml && coverage report -m
