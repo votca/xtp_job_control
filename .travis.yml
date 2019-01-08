@@ -8,6 +8,6 @@ python:
 install:
   - pip install .[test]
 
-scripts:
+script:
   - pytest tests
   - - coverage xml && coverage report -m
