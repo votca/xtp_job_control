@@ -9,7 +9,7 @@ def copy_to_tmp(origin: Path, dest: Path) -> Path:
     """
     Copy `origin` to temp `dest`
     """
-    shutil.copy(origin, dest)
+    shutil.copy(origin.as_posix(), dest.as_posix())
 
     return dest / origin.name
 
