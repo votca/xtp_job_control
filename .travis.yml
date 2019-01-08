@@ -10,4 +10,4 @@ install:
 
 script:
   - pytest tests
-  - - coverage xml && coverage report -m
+  - coverage xml && coverage report -m
