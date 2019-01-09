@@ -18,7 +18,7 @@ def read_xml_val(path_file: Path, prop_path: str) -> str:
     """
     read the `prop_path` from xml `path_file`
     """
-    tree = ET.parse(path_file)
+    tree = ET.parse(path_file.as_posix())
     root = tree.getroot()
     node = root.find(prop_path)
 
