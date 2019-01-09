@@ -29,7 +29,7 @@ setup(
     install_requires=[
         'jsonref', 'jsonschema', 'noodles[numpy]', 'pyyaml'],
     extras_require={
-        'test': ['pytest==4.1.0', 'pytest-cov==2.6.1', 'coverage']},
+        'test': ['pytest==4.1.0', 'pytest-cov==2.6.1', 'coverage', 'codacy-coverage']},
     include_package_data=True,
     package_data={
         'xtp_job_control': ['data/schemas/*']
