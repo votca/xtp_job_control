@@ -71,9 +71,9 @@ def retrieve_ouput(workdir: str, expected_file: str) -> str:
     """
     path = workdir / Path(expected_file)
     if path.exists():
-        return path
+        return path.as_posix()
     else:
-        return list(workdir.rglob(expected_file))
+        return list(p.as_posix() for p in workdir.rglob(expected_file))
 
 
 @schedule
