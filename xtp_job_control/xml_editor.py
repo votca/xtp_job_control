@@ -18,14 +18,14 @@ def edit_xml_options(options: Dict, path: str) -> Dict:
             for xml_file, section in options.items()}
 
 
-def edit_xml_file(path_file: str, xml_file: str, sections: Dict) -> dict:
+def edit_xml_file(path: str, xml_file: str, sections: Dict) -> dict:
     """
-    Parse the `path_file` XML file and replace the nodes
+    Parse the `path` XML file and replace the nodes
     given in `sections` in the XML tree. Finally write
     the XML tree to the same file
     """
     # Parse XML Tree
-    tree = ET.parse(path_file)
+    tree = ET.parse(path)
     root = tree.getroot()
     # Iterate over the sections to change
     for key, val in sections.items():
@@ -35,9 +35,9 @@ def edit_xml_file(path_file: str, xml_file: str, sections: Dict) -> dict:
             update_node(key, root, val)
 
     # write to the path_file the updated xml
-    tree.write(path_file, short_empty_elements=False)
+    tree.write(path, short_empty_elements=False)
 
-    return path_file
+    return path
 
 
 def update_node(path: str, root: object, val: Any):
