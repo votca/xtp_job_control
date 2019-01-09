@@ -69,7 +69,7 @@ def retrieve_ouput(workdir: str, expected_file: str) -> str:
     """
     Search for `expected_file` files in the `workdir`.
     """
-    path = workdir / Path(expected_file)
+    path = workdir / expected_file
     if path.exists():
         return path.as_posix()
     else:
