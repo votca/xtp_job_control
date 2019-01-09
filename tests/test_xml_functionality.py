@@ -29,7 +29,7 @@ def test_xml_job_file(tmp_path):
     """ Test that the XML job file is tested correctly"""
 
     file_path = copy_to_tmp(Path("tests/test_files/eqm.jobs"), tmp_path)
-    rs = edit_xml_job_file(file_path, [1, 2, 3])
+    rs = edit_xml_job_file(file_path.as_posix(), [1, 2, 3])
 
     assert len(read_available_jobs(rs)) == 3
 
