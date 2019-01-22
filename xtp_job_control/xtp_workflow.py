@@ -57,7 +57,7 @@ def create_workflow_simulation(options: Dict) -> object:
     """
     workdir = options['scratch_dir']
     path_optionfiles = options['path_optionfiles']
-    changeoptions = options['changeoptions']
+    change_options = options['change_options']
 
     # create results object
     results = Results({'options': options.copy()})
@@ -86,7 +86,7 @@ def create_workflow_simulation(options: Dict) -> object:
     # step neighborlist
     # Change options neighborlist
     results['job_opts_neighborlist'] = edit_options(
-        changeoptions, ['neighborlist'], path_optionfiles)
+        change_options, ['neighborlist'], path_optionfiles)
     results['job_neighborlist'] = run_neighborlist(results)
 
     # # step einternal
@@ -95,7 +95,7 @@ def create_workflow_simulation(options: Dict) -> object:
 
     # step config xqmultipole
     results['job_opts_xqmultipole'] = edit_options(
-        changeoptions, ['jobwriter', 'xqmultipole'], path_optionfiles)
+        change_options, ['jobwriter', 'xqmultipole'], path_optionfiles)
     results['job_select_xqmultipole_jobs'] = run_config_xqmultipole(results)
 
     # Run xqmultipole jobs in parallel
@@ -107,12 +107,12 @@ def create_workflow_simulation(options: Dict) -> object:
 
     # step eqm
     results['job_opts_eqm'] = edit_options(
-        changeoptions, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'], path_optionfiles)
+        change_options, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'], path_optionfiles)
     results['jobs_eqm'] = run_eqm(results)
 
     # step iqm
     results['job_opts_iqm'] = edit_options(
-        changeoptions, ['iqm', 'xtpdft_pair', 'mbgft_pair'], path_optionfiles)
+        change_options, ['iqm', 'xtpdft_pair', 'mbgft_pair'], path_optionfiles)
     results['jobs_iqm'] = run_iqm(results)
 
     # # step ianalyze

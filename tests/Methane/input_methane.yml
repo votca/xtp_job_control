@@ -37,7 +37,7 @@ copy_option_files:
       - mbgft_pair.xml
       - xtpdft_pair.xml
 
-changeoptions:
+change_options:
   neighborlist:
     constant: 0.6
 
