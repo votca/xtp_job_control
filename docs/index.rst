@@ -10,6 +10,8 @@ Welcome to xtp_job_control's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   xtp_job_control
+   tutorial
 
 
 Indices and tables
