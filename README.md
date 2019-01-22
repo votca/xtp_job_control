@@ -2,6 +2,6 @@
 
 # XTP_JOB_CONTROL
 
-XTP Job control management 
+A python library to create, managed and executed worflows for the [xtp votca package](https://github.com/votca/xtp)
 
 
