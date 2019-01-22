@@ -22,4 +22,4 @@ def test_input_validation(tmp_path):
     with open(test_file.as_posix(), 'w')as f:
         f.write(yaml.dump(d))
 
-    validate_input(test_file)
+    validate_input(test_file.as_posix())
