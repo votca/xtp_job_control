@@ -95,11 +95,11 @@ def create_promise_command(string: str, *args) -> str:
 
 
 @schedule
-def edit_jobs_file(path: Path, jobs_to_run: List):
+def edit_jobs_file(path: str, jobs_to_run: List):
     """
     Run only the jobs listed in jobs_to_run
     """
-    return {path.stem: edit_xml_job_file(path, jobs_to_run)}
+    return {path: edit_xml_job_file(path, jobs_to_run)}
 
 
 @schedule
@@ -116,7 +116,7 @@ def run_parallel_jobs(dict_jobs: dict, dict_input: dict) -> dict:
     # Add command to run
     results = dict_jobs.copy()
     for key, job_info in dict_jobs.items():
-        input_xml = job_info[name].as_posix()
+        input_xml = job_info[name]
         cmd_parallel = "xtp_parallel -e {} -f {} -o {} ".format(name, state, input_xml)
         # Call subprocess
         output = run_command(
@@ -144,9 +144,9 @@ def split_xqmultipole_calculations(input_dict: dict) -> dict:
         # replace references inside xqmultipole.xml and job.xml
         options = {
             'xqmultipole':
-            {'multipoles': input_dict['system'].as_posix(),
+            {'multipoles': input_dict['system'],
              'control': {'job_file': config['job'].name,
-                         'emp_file': input_dict['mps_tab'].as_posix()}},
+                         'emp_file': input_dict['mps_tab']}},
             'job': {'input': {
                 'replace_regex': ('MP_FILES', mp_files)}}
         }
