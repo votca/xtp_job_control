@@ -12,10 +12,10 @@ def test_runner(tmp_path):
         job1["file"])
     job2 = call_xtp_cmd(cmd1, workdir=tmp_path, expected_output={"results": "test.out"})
 
-    rs = run(job2)
-    print(rs)
+    options = ['display', 'serial']
+    for opt in options:
+        rs = run(job2, opt)
+        with open(rs["results"], 'r') as f:
+            xs = f.read()
 
-    with open(rs["results"], 'r') as f:
-        xs = f.read()
-
-    assert len(xs) == 50
+        assert len(xs) == 50

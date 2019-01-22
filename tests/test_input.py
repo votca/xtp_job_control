@@ -8,7 +8,7 @@ def test_input_validation(tmp_path):
     """
     Test the input validation
     """
-    test_file = tmp_path / "test.yml"
+    test_file = (tmp_path / "test.yml").as_posix()
     root = "tests/Methane"
 
     d = {
@@ -23,7 +23,7 @@ def test_input_validation(tmp_path):
 
     # check valid input
     dump_yaml(test_file, d)
-    validate_input(test_file.as_posix())
+    validate_input(test_file)
 
     # check invalid input
     try:
@@ -36,5 +36,5 @@ def test_input_validation(tmp_path):
 
 
 def dump_yaml(test_file: str, d: Dict) -> None:
-    with open(test_file.as_posix(), 'w')as f:
+    with open(test_file, 'w')as f:
         f.write(yaml.dump(d))
