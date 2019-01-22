@@ -37,7 +37,7 @@ def test_initial_config(tmp_path):
     """
     test_file = "tests/Methane/input_methane.yml"
     input_dict = recursively_create_path(validate_input(test_file))
-    input_dict['workdir'] = Path(tmp_path).as_posix()
+    input_dict['workdir'] = tmp_path.as_posix()
 
     # Initialize data in workdir
     new_options = initial_config(input_dict)
