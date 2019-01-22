@@ -1,3 +1,4 @@
+from pathlib import Path
 from xtp_job_control.input import validate_input
 from xtp_job_control.runner import run
 from xtp_job_control.worflow_components import (Results, create_xml_job_file)
@@ -36,7 +37,7 @@ def test_initial_config(tmp_path):
     """
     test_file = "tests/Methane/input_methane.yml"
     input_dict = recursively_create_path(validate_input(test_file))
-    input_dict['workdir'] = tmp_path
+    input_dict['workdir'] = Path(tmp_path).as_posix()
 
     # Initialize data in workdir
     new_options = initial_config(input_dict)
