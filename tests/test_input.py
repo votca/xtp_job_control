@@ -19,7 +19,7 @@ def test_input_validation(tmp_path):
         "mp_files": "tests/Methane/MP_FILES",
         "qc_files": "tests/Methane/QC_FILES"
     }
-    with open(test_file, 'w')as f:
+    with open(test_file.as_posix(), 'w')as f:
         f.write(yaml.dump(d))
 
     validate_input(test_file)
