@@ -30,10 +30,6 @@ setup(
         'noodles[numpy]', 'pyyaml', 'schema'],
     extras_require={
         'test': ['pytest==4.1.0', 'pytest-cov==2.6.1', 'coverage', 'codacy-coverage']},
-    include_package_data=True,
-    package_data={
-        'xtp_job_control': ['data/schemas/*']
-    },
     scripts=[
         'scripts/run_xtp_workflow.py']
 )

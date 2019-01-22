@@ -7,7 +7,7 @@ def test_input_validation(tmp_path):
     """
     Test the input validation
     """
-    test_file = join(tmp_path, "test.yml")
+    test_file = tmp_path / "test.yml"
     root = "tests/Methane"
 
     d = {
