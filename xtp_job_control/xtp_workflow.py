@@ -115,9 +115,9 @@ def create_workflow_simulation(options: Dict) -> object:
         change_options, ['iqm', 'xtpdft_pair', 'mbgft_pair'], path_optionfiles)
     results['jobs_iqm'] = run_iqm(results)
 
-    # # step ianalyze
-    # ianalyze_file = path_optionfiles / "ianalyze.xml"
-    # results['job_ianalyze'] = run_analyze(results, ianalyze_file)
+    # step ianalyze
+    ianalyze_file = path_optionfiles / "ianalyze.xml"
+    results['job_ianalyze'] = run_analyze(results, ianalyze_file)
 
     # RUN the workflow
     output = run(gather_dict(**results.state))
