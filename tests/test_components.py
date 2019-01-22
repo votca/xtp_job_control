@@ -20,10 +20,11 @@ def test_results():
     assert output["foo"] == 1
 
 
-def test_xml_job_creation(tmp_path):
+def test_xml_job_creation():
     """
     Check that a job file is created correctly
     """
+    tmp_path = tempfile.gettempdir()
     jobs = read_available_jobs("tests/test_files/eqm.jobs")
 
     file_path = create_xml_job_file(jobs[0], Path(tmp_path))
@@ -31,7 +32,7 @@ def test_xml_job_creation(tmp_path):
     assert file_path.exists()
 
 
-def test_initial_config(tmp_path):
+def test_initial_config():
     """
     Check that the files are copy to a temporal workdir
     """
