@@ -243,7 +243,7 @@ def create_xml_job_file(job: object, workdir: Path) -> Path:
     Create an xml file containing a single job
     """
     job_file = workdir / 'job.xml'
-    create_job_file(job, job_file)
+    create_job_file(job, job_file.as_posix())
 
     return job_file
 
