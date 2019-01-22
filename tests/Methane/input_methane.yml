@@ -5,7 +5,7 @@ system:
   "tests/Methane/system.xml"
 
 path_votcashare:
-  "/home/felipe/modules/votca/votca_dev/share/votca"
+  "tests/test_files/votca"
 
 topology:
   "tests/Methane/MD_FILES/topol.tpr"
