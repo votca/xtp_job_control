@@ -9,7 +9,7 @@ def readme():
 
 setup(
     name='xtp_job_control',
-    version='0.0.1',
+    version='0.0.2',
     description='',
     license='Apache-2.0',
     url='https://github.com/votca/xtp_job_control',
@@ -21,13 +21,13 @@ setup(
     classifiers=[
         'License :: OSI Approved :: Apache-2.0 License',
         'Intended Audience :: Science/Research',
-        'programming language :: python :: 3.5',
+        'programming language :: python :: 3.6',
         'development status :: 4 - Beta',
         'intended audience :: science/research',
         'topic :: scientific/engineering :: chemistry'
     ],
     install_requires=[
-        'jsonref', 'jsonschema', 'noodles[numpy]', 'pyyaml'],
+        'noodles[numpy]', 'pyyaml', 'schema'],
     extras_require={
         'test': ['pytest==4.1.0', 'pytest-cov==2.6.1', 'coverage', 'codacy-coverage']},
     include_package_data=True,
