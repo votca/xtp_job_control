@@ -26,7 +26,7 @@ def test_xml_job_creation(tmp_path):
 
     jobs = read_available_jobs("tests/test_files/eqm.jobs")
 
-    file_path = create_xml_job_file(jobs[0], tmp_path)
+    file_path = create_xml_job_file(jobs[0], Path(tmp_path))
 
     assert file_path.exists()
 
