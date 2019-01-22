@@ -379,7 +379,7 @@ def initial_config(options: Dict) -> Dict:
     # Option files
     optionfiles = scratch_dir / 'OPTIONFILES'
     optionfiles.mkdir()
-    posix_optionfiles = str(optionfiles.as_posix())
+    posix_optionfiles = optionfiles.as_posix()
 
     # Copy option files to temp file
     path_votcashare = options['path_votcashare']

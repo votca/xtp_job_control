@@ -5,6 +5,8 @@ from xtp_job_control.worflow_components import (Results, create_xml_job_file)
 from xtp_job_control.xml_editor import read_available_jobs
 from xtp_job_control.xtp_workflow import (initial_config, recursively_create_path)
 from noodles import gather_dict
+import pytest
+import sys
 import tempfile
 
 
@@ -32,6 +34,7 @@ def test_xml_job_creation():
     assert file_path.exists()
 
 
+@pytest.mark.skipif(sys.version_info.minor < 6, reason="python 3.6 or higher required")
 def test_initial_config():
     """
     Check that the files are copy to a temporal workdir
