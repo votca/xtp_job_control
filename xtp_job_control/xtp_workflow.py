@@ -130,7 +130,7 @@ def edit_system_options(results: dict) -> dict:
     """
     Adjust the links inside the system.xml file.
     """
-    mp_files = results['options']['mp_files'].absolute().as_posix()
+    mp_files = to_posix(results['options']['mp_files'].absolute())
     system_options = {
         'system': {
             'molecules': {"replace_regex_recursively":
@@ -262,7 +262,7 @@ def run_config_xqmultipole(results: dict) -> dict:
             'xqmultipole_jobs': 'jobwriter.mps.monomer.xml'})
 
     # change path of the MP_FILES
-    mp_files = results['options']['mp_files'].absolute().as_posix()
+    mp_files = to_posix(results['options']['mp_files'].absolute())
     results['job_setup_xqmultipole']['mps_tab'] = rename_map_file(
         results['job_setup_xqmultipole']['mps_tab'], "MP_FILES", mp_files)
 
