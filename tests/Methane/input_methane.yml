@@ -95,15 +95,15 @@ change_options:
   bsecoupling:
     openmp: 0
 
-  # jobwriter_qmmm:
-  #   keys: "mps.monomer mps.background"
+  jobwriter_qmmm:
+    keys: "mps.monomer mps.background"
 
-  # qmmm:
-  #  archiving: iterations
-  #  dftpackage: "OPTIONFILES/xtpdft_qmmm.xml"
-  #  gwbse_options: "OPTIONFILES/mbgft_qmmm.xml"
-  #  cutoff1: 1
-  #  cutoff2: 1.2
+  qmmm:
+   archiving: iterations
+   dftpackage: "OPTIONFILES/xtpdft_qmmm.xml"
+   gwbse_options: "OPTIONFILES/mbgft_qmmm.xml"
+   cutoff1: 1
+   cutoff2: 1.2
 
   # xtpdft_qmmm:
   #   threads: 0

@@ -119,6 +119,13 @@ def create_workflow_simulation(options: Dict) -> object:
     ianalyze_file = path_optionfiles / "ianalyze.xml"
     results['job_ianalyze'] = run_analyze(results, ianalyze_file)
 
+    # # step qmmm
+    # results['job_opts_qmmm'] = edit_options(
+    #     change_options, ['qmmm'], path_optionfiles)
+
+    # results['job_qmmm'] = 
+    
+    
     # RUN the workflow
     output = run(gather_dict(**results.state))
     write_output(output)

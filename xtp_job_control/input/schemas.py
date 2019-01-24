@@ -28,6 +28,8 @@ schema_change_options = Schema({
 
     Optional("neighborlist", default={}): Dict,
 
+    Optional("qmmm", default={}): Dict,
+
     Optional("xqmultipole", default={}): Dict,
 
     Optional("xtpdft", default={}): Dict,
