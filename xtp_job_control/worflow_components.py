@@ -263,11 +263,3 @@ def rename_map_file(path_file: Path, expression: str, new_val: str):
         f.write(re.sub(regex, new_val, xs))
 
     return path_file
-
-
-def as_posix(path: Path) -> str:
-    """
-    Call the `as_posix` method from a `Path` object using
-    function notation
-    """
-    return getattr(path, 'as_posix')()

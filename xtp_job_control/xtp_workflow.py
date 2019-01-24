@@ -1,7 +1,7 @@
 from .runner import run
 from .input import validate_input
 from .worflow_components import (
-    Results, as_posix, call_xtp_cmd, create_promise_command,
+    Results, call_xtp_cmd, create_promise_command,
     edit_jobs_file, edit_options, rename_map_file, run_parallel_jobs,
     split_eqm_calculations, split_iqm_calculations, split_xqmultipole_calculations)
 from .xml_editor import (edit_xml_file)
@@ -221,7 +221,7 @@ def run_iqm(results: dict) -> dict:
     sections_to_edit = {
             '': {
                 'replace_regex_recursively':
-                ('OPTIONFILES', as_posix(path_optionfiles))}
+                ('OPTIONFILES', to_posix(path_optionfiles))}
         }
 
     edited_iqm_file = schedule(edit_xml_file)(
@@ -379,7 +379,7 @@ def initial_config(options: Dict) -> Dict:
     # Option files
     optionfiles = scratch_dir / 'OPTIONFILES'
     optionfiles.mkdir()
-    posix_optionfiles = optionfiles.as_posix()
+    posix_optionfiles = to_posix(optionfiles)
 
     # Copy option files to temp file
     path_votcashare = options['path_votcashare']
@@ -392,8 +392,8 @@ def initial_config(options: Dict) -> Dict:
         dst = options['copy_option_files']['dst']
         for s, d in zip(src, dst):
             shutil.copyfile(
-                as_posix(optionfiles / s),
-                as_posix(optionfiles / d))
+                to_posix(optionfiles / s),
+                to_posix(optionfiles / d))
 
     # Copy input provided by the user to tempfolder
     d = options.copy()
@@ -401,10 +401,10 @@ def initial_config(options: Dict) -> Dict:
         if isinstance(path, Path) and 'votca' not in path.name.lower():
             abs_path = scratch_dir / path.name
             if path.is_file():
-                shutil.copy(path.as_posix(), scratch_dir)
+                shutil.copy(to_posix(path), scratch_dir)
                 options[key] = abs_path
             elif path.is_dir() and not abs_path.exists():
-                shutil.copytree(path.as_posix(), abs_path.as_posix())
+                shutil.copytree(to_posix(path), to_posix(abs_path))
                 options[key] = abs_path
 
     dict_config = {
