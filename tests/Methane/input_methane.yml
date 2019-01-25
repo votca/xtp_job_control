@@ -28,16 +28,7 @@ eqm_jobs: [1, 2]
 # Run only the first job
 iqm_jobs: [1]
 
-# Copy xml files
-copy_option_files:
-    src:
-      - mbgft.xml
-      - xtpdft.xml
-    dst:
-      - mbgft_pair.xml
-      - xtpdft_pair.xml
-
-change_options:
+votca_calculators_options:
   neighborlist:
     constant: 0.6
 

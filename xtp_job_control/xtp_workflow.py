@@ -57,7 +57,6 @@ def create_workflow_simulation(options: Dict) -> object:
     """
     workdir = options['scratch_dir']
     path_optionfiles = options['path_optionfiles']
-    change_options = options['change_options']
 
     # create results object
     results = Results({'options': options.copy()})
@@ -85,8 +84,6 @@ def create_workflow_simulation(options: Dict) -> object:
 
     # step neighborlist
     # Change options neighborlist
-    results['job_opts_neighborlist'] = edit_options(
-        change_options, ['neighborlist'], path_optionfiles)
     results['job_neighborlist'] = run_neighborlist(results)
 
     # # step einternal
@@ -94,8 +91,6 @@ def create_workflow_simulation(options: Dict) -> object:
     results['job_einternal'] = run_einternal(results)
 
     # step config xqmultipole
-    results['job_opts_xqmultipole'] = edit_options(
-        change_options, ['jobwriter', 'xqmultipole'], path_optionfiles)
     results['job_select_xqmultipole_jobs'] = run_config_xqmultipole(results)
 
     # Run xqmultipole jobs in parallel
@@ -106,13 +101,9 @@ def create_workflow_simulation(options: Dict) -> object:
     results['job_eanalyze'] = run_analyze(results, eanalyze_file)
 
     # step eqm
-    results['job_opts_eqm'] = edit_options(
-        change_options, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'], path_optionfiles)
     results['jobs_eqm'] = run_eqm(results)
 
     # step iqm
-    results['job_opts_iqm'] = edit_options(
-        change_options, ['iqm', 'xtpdft_pair', 'mbgft_pair'], path_optionfiles)
     results['jobs_iqm'] = run_iqm(results)
 
     # step ianalyze
@@ -120,17 +111,27 @@ def create_workflow_simulation(options: Dict) -> object:
     results['job_ianalyze'] = run_analyze(results, ianalyze_file)
 
     # # step qmmm
-    # results['job_opts_qmmm'] = edit_options(
-    #     change_options, ['qmmm'], path_optionfiles)
 
     # results['job_qmmm'] = 
-    
-    
+
+
     # RUN the workflow
     output = run(gather_dict(**results.state))
     write_output(output)
 
     print("check output file: results.yml")
+
+
+def edit_calculator_options(results: dict, sections: list) -> dict:
+    """
+    Edit the options of a calculator using the values provided by the user
+    """
+    options = results['options']
+    path_optionfiles = options['path_optionfiles']
+    votca_calculators_options = options['votca_calculators_options']
+
+    return edit_options(
+        votca_calculators_options, sections, path_optionfiles)
 
 
 def edit_system_options(results: dict) -> dict:
@@ -177,6 +178,9 @@ def run_neighborlist(results: dict) -> dict:
     """
     run neighborlist calculator
     """
+    results['job_opts_neighborlist'] = edit_calculator_options(
+        results, ['neighborlist'])
+
     cmd_neighborlist = create_promise_command(
         "xtp_run -e neighborlist -o {} -f {}",
         results['job_opts_neighborlist']['neighborlist'],
@@ -204,6 +208,10 @@ def run_eqm(results: dict) -> dict:
     """
     Run the eqm jobs.
     """
+    # set user-defined values
+    results['job_opts_eqm'] = edit_calculator_options(
+        results, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'])
+
     cmd_eqm_write = create_promise_command(
         "xtp_parallel -e eqm -o {} -f {} -s 0 -j write", results['job_opts_eqm']['eqm'],
         results['job_state']['state'])
@@ -223,6 +231,15 @@ def run_iqm(results: dict) -> dict:
     """
     Run the eqm jobs.
     """
+    # Copy option files
+    optionfiles = results['options']['path_optionfiles']
+    src = ["mbgft.xml", "xtpdft.xml"]
+    dst = ["mbgft_pair.xml", "xtpdft_pair.xml"]
+    copy_option_files(optionfiles, src, dst)
+
+    results['job_opts_iqm'] = edit_calculator_options(
+        results, ['iqm', 'xtpdft_pair', 'mbgft_pair'])
+
     # replace optionfiles with its absolute path
     path_optionfiles = results['options']['path_optionfiles']
     sections_to_edit = {
@@ -253,10 +270,22 @@ def run_iqm(results: dict) -> dict:
     return distribute_iqm_jobs(results)
 
 
+def run_qmmm(results: dict) -> dict:
+    """
+    QM/MM calculation
+    """
+    # results['job_opts_qmmm'] = edit_calculator_options(
+    #     results, ['qmmm'])
+    pass
+
+
 def run_config_xqmultipole(results: dict) -> dict:
     """
     Config the optionfiles to run the xqmultipole jobs
     """
+    results['job_opts_xqmultipole'] = edit_calculator_options(
+        results, ['jobwriter', 'xqmultipole'])
+
     workdir = results['options']['scratch_dir']
 
     cmd_setup_xqmultipole = create_promise_command(
@@ -358,6 +387,13 @@ def write_output(output: dict, file_name: str="results.yml") -> None:
         yaml.dump(to_posix(output), f, default_flow_style=False)
 
 
+def copy_option_files(optionfiles, src, dst):
+    for s, d in zip(src, dst):
+        shutil.copyfile(
+            to_posix(optionfiles / s),
+            to_posix(optionfiles / d))
+
+
 def to_posix(d):
     """
     convert the Path objects to string
@@ -393,14 +429,6 @@ def initial_config(options: Dict) -> Dict:
     copy_tree(path_votcashare / 'xtp/xml', posix_optionfiles)
     shutil.copy(path_votcashare / 'ctp/xml/xqmultipole.xml', posix_optionfiles)
     copy_tree(path_votcashare / 'xtp/packages', posix_optionfiles)
-
-    if 'copy_option_files' in options:
-        src = options['copy_option_files']['src']
-        dst = options['copy_option_files']['dst']
-        for s, d in zip(src, dst):
-            shutil.copyfile(
-                to_posix(optionfiles / s),
-                to_posix(optionfiles / d))
 
     # Copy input provided by the user to tempfolder
     d = options.copy()
