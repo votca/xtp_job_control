@@ -1,4 +1,4 @@
-__all__ = ["schema_simulations"]
+__all__ = ["schema_energies", "schema_kmc"]
 
 from os.path import exists
 from schema import (And, Optional, Schema, Use)
@@ -20,6 +20,10 @@ schema_votca_calculators_options = Schema({
 
     Optional("jobwriter_qmmm", default={}): Dict,
 
+    Optional("kmclifetime", default={}): Dict,
+
+    Optional("kmcmultiple", default={}): Dict,
+
     Optional("mbgft", default={}): Dict,
 
     Optional("mbgft_pair", default={}): Dict,
@@ -40,12 +44,24 @@ schema_votca_calculators_options = Schema({
 })
 
 
-# Workflow input
-schema_simulations = Schema({
+schema_kmc = Schema({
+    # Name of the workflow to run
+    "workflow": And(str, Use(str.lower),
+                    lambda s: s in ("kmc")),
+
+    "state": exists,
+
+    # Change_Options options from template
+    Optional("votca_calculators_options", default={}): schema_votca_calculators_options
+
+})
+
+
+schema_energies = Schema({
 
     # Name of the workflow to run
     "workflow": And(str, Use(str.lower),
-                    lambda s: s in ("energies", "kmc")),
+                    lambda s: s in ("energies")),
 
     # path to the VOTCASHARE folder
     "path_votcashare": exists,

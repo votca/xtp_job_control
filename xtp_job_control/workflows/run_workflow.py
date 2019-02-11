@@ -11,7 +11,8 @@ def run_workflow(options: dict):
     Workflow to run a complete xtp ssimulation using `options`.
     """
     # validate_input
-    input_dict = recursively_create_path(validate_input(options['input_file']))
+    input_dict = recursively_create_path(
+        validate_input(options['input_file']))
 
     # Merge inputs
     options.update(input_dict)

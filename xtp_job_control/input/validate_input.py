@@ -1,24 +1,23 @@
-from .schemas import schema_simulations
+from .schemas import (schema_energies, schema_kmc)
 from schema import SchemaError
 from typing import Dict
 import yaml
 
 
 # available schemas
-schema_simulations = {'simulation': schema_simulations}
+schema_simulations = {'energies': schema_energies, 'kmc': schema_kmc}
 
 
-def validate_input(input_file: str, workflow_name: str='simulation') -> Dict:
+def validate_input(input_file: str) -> Dict:
     """
     Read the input file in YAML format, validate it again the schema
-    of `workflow_name` and return a nested dictionary with the input.
+    of `workflow` and return a nested dictionary with the input.
     """
-    schema = schema_simulations[workflow_name]
-
     with open(input_file, 'r') as f:
         dict_input = yaml.load(f.read())
 
     try:
+        schema = schema_simulations[dict_input['workflow']]
         return schema.validate(dict_input)
 
     except SchemaError as e:

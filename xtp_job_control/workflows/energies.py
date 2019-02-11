@@ -1,9 +1,10 @@
+from ..results import Results
 from ..runner import run
 from .xtp_workflow import (
     create_promise_command, edit_system_options, distribute_xqmultipole_jobs,
     run_analyze, run_config_xqmultipole,
     run_dump, run_einternal, run_eqm, run_iqm, run_neighborlist, write_output)
-from .workflow_components import (Results, call_xtp_cmd)
+from .workflow_components import call_xtp_cmd
 from noodles import gather_dict
 
 

@@ -1,8 +1,9 @@
 from pathlib import Path
 from xtp_job_control.input import validate_input
+from xtp_job_control.results import Results
 from xtp_job_control.runner import run
 from xtp_job_control.xml_editor import read_available_jobs
-from xtp_job_control.workflows.workflow_components import (Results, create_xml_job_file)
+from xtp_job_control.workflows.workflow_components import create_xml_job_file
 from xtp_job_control.workflows.xtp_workflow import (
     initial_config, recursively_create_path, to_posix)
 from noodles import gather_dict
@@ -47,7 +48,7 @@ def test_posix():
 
 
 @pytest.mark.skipif(sys.version_info.minor < 6, reason="python 3.6 or higher required")
-def test_initial_config():
+def test_initial_config_energies():
     """
     Check that the files are copy to a temporal workdir
     """

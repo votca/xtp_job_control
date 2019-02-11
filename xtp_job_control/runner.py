@@ -6,12 +6,15 @@ from noodles.serial.numpy import arrays_to_hdf5
 from typing import Any
 
 
-def run(wf: object, runner: str='parallel', n_processes: int=1, cache: str='cache.db', ) -> Any:
+def run(wf: object, runner: str = 'parallel', n_processes: int = 1,
+        cache: str = 'cache.db', ) -> Any:
     """
     Run a workflow `wf` using `runner` and `n_processes` number of threads/process
     """
     runner = runner.lower()
 
+    # if isinstance(wf, )
+    
     if runner == 'display':
         with NCDisplay() as display:
             return run_logging(wf, n_processes, display)
