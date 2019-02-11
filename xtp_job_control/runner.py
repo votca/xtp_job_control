@@ -1,9 +1,10 @@
-from noodles import (run_logging, run_single, serial)
+from noodles import (gather_dict, run_logging, run_single, serial)
 from noodles.run.threading.sqlite3 import run_parallel as run_provenance
 from noodles.display import NCDisplay
 from noodles.serial import Registry
 from noodles.serial.numpy import arrays_to_hdf5
 from typing import Any
+from .results import Results
 
 
 def run(wf: object, runner: str = 'parallel', n_processes: int = 1,
@@ -13,8 +14,9 @@ def run(wf: object, runner: str = 'parallel', n_processes: int = 1,
     """
     runner = runner.lower()
 
-    # if isinstance(wf, )
-    
+    if isinstance(wf, Results):
+        wf = gather_dict(**wf.state)
+
     if runner == 'display':
         with NCDisplay() as display:
             return run_logging(wf, n_processes, display)

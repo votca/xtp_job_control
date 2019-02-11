@@ -70,7 +70,7 @@ def energies_workflow(options: dict) -> object:
     # # step qmmm
     # results['job_qmmm'] = 
     # RUN the workflow
-    output = run(gather_dict(**results.state))
+    output = run(results)
     write_output(output)
 
     print("check output file: results.yml")

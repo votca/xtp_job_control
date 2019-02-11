@@ -1,0 +1,16 @@
+workflow:
+  kmc
+
+state_file:
+  "tests/KMC/state.sql"
+
+votca_calculators_options:
+  kmcmultiple:
+    runtime: 1000
+    outputtime: 10
+    field: "0 0 0"
+    carriertype:  "singlet"
+    rates: "calculate"
+
+  kmclifetime:
+    numberofinsertions: 5

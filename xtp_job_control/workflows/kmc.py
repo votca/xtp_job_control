@@ -22,7 +22,7 @@ def kmc_workflow(options: dict) -> object:
 
     results["job_kmcmultiple"] = call_xtp_cmd(args, workdir, expected_output={})
 
-    output = run(gather_dict(**results.state))
+    output = run(results)
     write_output(output)
 
     # xtp_run -e kmcmultiple -o OPTIONFILES/kmcmultiple.xml -f state.sql
