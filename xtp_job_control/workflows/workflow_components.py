@@ -1,4 +1,4 @@
-from .xml_editor import (
+from ..xml_editor import (
     create_job_file, edit_xml_job_file, edit_xml_options, read_available_jobs)
 from collections import defaultdict
 from noodles import (schedule, has_scheduled_methods)
@@ -37,7 +37,7 @@ class Results(dict):
 
 
 @schedule
-def call_xtp_cmd(cmd: str, workdir: str, expected_output: dict=None):
+def call_xtp_cmd(cmd: str, workdir: str, expected_output: dict = None):
     """
     Run a bash `cmd` in the `cwd` folder and search for a list of `expected_output`
     files.
@@ -47,7 +47,7 @@ def call_xtp_cmd(cmd: str, workdir: str, expected_output: dict=None):
     return run_command(cmd, workdir, expected_output)
 
 
-def run_command(cmd: str, workdir: str, expected_output: dict=None):
+def run_command(cmd: str, workdir: str, expected_output: dict = None):
     """
     Run a bash command using subprocess
     """

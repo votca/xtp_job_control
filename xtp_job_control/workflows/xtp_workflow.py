@@ -1,10 +1,10 @@
-from .runner import run
-from .input import validate_input
-from .worflow_components import (
+from ..runner import run
+from ..input import validate_input
+from .workflow_components import (
     Results, call_xtp_cmd, create_promise_command,
     edit_jobs_file, edit_options, rename_map_file, run_parallel_jobs,
     split_eqm_calculations, split_iqm_calculations, split_xqmultipole_calculations)
-from .xml_editor import (edit_xml_file)
+from ..xml_editor import (edit_xml_file)
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from noodles import (gather_dict, lift, schedule)
