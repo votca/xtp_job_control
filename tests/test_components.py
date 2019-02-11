@@ -1,9 +1,10 @@
 from pathlib import Path
 from xtp_job_control.input import validate_input
 from xtp_job_control.runner import run
-from xtp_job_control.worflow_components import (Results, create_xml_job_file)
 from xtp_job_control.xml_editor import read_available_jobs
-from xtp_job_control.xtp_workflow import (initial_config, recursively_create_path, to_posix)
+from xtp_job_control.workflows.workflow_components import (Results, create_xml_job_file)
+from xtp_job_control.workflows.xtp_workflow import (
+    initial_config, recursively_create_path, to_posix)
 from noodles import gather_dict
 import os
 import pytest

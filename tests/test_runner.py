@@ -1,5 +1,5 @@
 from xtp_job_control.runner import run
-from xtp_job_control.worflow_components import (call_xtp_cmd, create_promise_command)
+from xtp_job_control.workflows.workflow_components import (call_xtp_cmd, create_promise_command)
 
 
 def test_runner(tmp_path):

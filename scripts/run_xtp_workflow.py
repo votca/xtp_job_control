@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from xtp_job_control import xtp_workflow
+from xtp_job_control import run_workflow
 import argparse
 
 
@@ -25,7 +25,7 @@ def cli():
 
 def main():
     options = cli()
-    xtp_workflow(options)
+    run_workflow(options)
 
 
 if __name__ == "__main__":

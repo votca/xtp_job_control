@@ -12,7 +12,7 @@ def test_input_validation(tmp_path):
     root = "tests/Methane"
 
     d = {
-        "workflow": "simulation",
+        "workflow": "energies",
         "path_votcashare": "tests/test_files",
         "system": join(root, "system.xml"),
         "topology": "tests/Methane/MD_FILES/topol.tpr",

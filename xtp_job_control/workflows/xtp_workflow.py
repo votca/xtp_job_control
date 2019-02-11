@@ -1,13 +1,11 @@
-from .runner import run
-from .input import validate_input
-from .worflow_components import (
-    Results, call_xtp_cmd, create_promise_command,
+from .workflow_components import (
+    call_xtp_cmd, create_promise_command,
     edit_jobs_file, edit_options, rename_map_file, run_parallel_jobs,
     split_eqm_calculations, split_iqm_calculations, split_xqmultipole_calculations)
-from .xml_editor import (edit_xml_file)
+from ..xml_editor import (edit_xml_file)
 from distutils.dir_util import copy_tree
 from pathlib import Path
-from noodles import (gather_dict, lift, schedule)
+from noodles import (lift, schedule)
 from typing import (Callable, Dict)
 import datetime
 import logging
@@ -18,23 +16,6 @@ import yaml
 
 # Starting logger
 logger = logging.getLogger(__name__)
-
-
-def xtp_workflow(options: Dict):
-    """
-    Workflow to run a complete xtp ssimulation using `options`.
-    """
-    # validate_input
-    input_dict = recursively_create_path(validate_input(options['input_file']))
-
-    # Merge inputs
-    options.update(input_dict)
-
-    # Setup environment to run xtp
-    options = initial_config(options)
-
-    # Create graph of dependencies
-    create_workflow_simulation(options)
 
 
 def recursively_create_path(dict_input):
@@ -51,79 +32,16 @@ def recursively_create_path(dict_input):
     return dict_input
 
 
-def create_workflow_simulation(options: Dict) -> object:
+def edit_calculator_options(results: dict, sections: list) -> dict:
     """
-    Use the `options` to create a workflow
+    Edit the options of a calculator using the values provided by the user
     """
-    workdir = options['scratch_dir']
+    options = results['options']
     path_optionfiles = options['path_optionfiles']
-    change_options = options['change_options']
+    votca_calculators_options = options['votca_calculators_options']
 
-    # create results object
-    results = Results({'options': options.copy()})
-
-    # Adjust links in the system.xml file
-    results['job_system'] = edit_system_options(results)
-
-    # Step state
-    # runs the mapping from MD coordinates to segments and creates .sql file
-    # you can explore the created .sql file with e.g. sqlitebrowser
-    path_state = workdir / "state.sql"
-    args = create_promise_command(
-        "xtp_map -t {} -c {} -s {} -f {}",
-        options['topology'], options['trajectory'],
-        results['job_system']['system'], path_state)
-
-    # calls something like:
-    # xtp_map -t MD_FILES/topol.tpr -c MD_FILES/conf.gro -s system.xml -f state.sql
-    results['job_state'] = call_xtp_cmd(args, workdir, expected_output={'state': 'state.sql'})
-
-    # step dump
-    # output MD and QM mappings into extract.trajectory_md.pdb and
-    # extract.trajectory_qm.pdb files
-    results['job_dump'] = run_dump(results)
-
-    # step neighborlist
-    # Change options neighborlist
-    results['job_opts_neighborlist'] = edit_options(
-        change_options, ['neighborlist'], path_optionfiles)
-    results['job_neighborlist'] = run_neighborlist(results)
-
-    # # step einternal
-    # read in reorganization energies stored in system.xml to state.sql
-    results['job_einternal'] = run_einternal(results)
-
-    # step config xqmultipole
-    results['job_opts_xqmultipole'] = edit_options(
-        change_options, ['jobwriter', 'xqmultipole'], path_optionfiles)
-    results['job_select_xqmultipole_jobs'] = run_config_xqmultipole(results)
-
-    # Run xqmultipole jobs in parallel
-    results['jobs_xqmultipole'] = distribute_xqmultipole_jobs(results)
-
-    # step eanalyze
-    eanalyze_file = path_optionfiles / "eanalyze.xml"
-    results['job_eanalyze'] = run_analyze(results, eanalyze_file)
-
-    # step eqm
-    results['job_opts_eqm'] = edit_options(
-        change_options, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'], path_optionfiles)
-    results['jobs_eqm'] = run_eqm(results)
-
-    # step iqm
-    results['job_opts_iqm'] = edit_options(
-        change_options, ['iqm', 'xtpdft_pair', 'mbgft_pair'], path_optionfiles)
-    results['jobs_iqm'] = run_iqm(results)
-
-    # step ianalyze
-    ianalyze_file = path_optionfiles / "ianalyze.xml"
-    results['job_ianalyze'] = run_analyze(results, ianalyze_file)
-
-    # RUN the workflow
-    output = run(gather_dict(**results.state))
-    write_output(output)
-
-    print("check output file: results.yml")
+    return edit_options(
+        votca_calculators_options, sections, path_optionfiles)
 
 
 def edit_system_options(results: dict) -> dict:
@@ -170,6 +88,9 @@ def run_neighborlist(results: dict) -> dict:
     """
     run neighborlist calculator
     """
+    results['job_opts_neighborlist'] = edit_calculator_options(
+        results, ['neighborlist'])
+
     cmd_neighborlist = create_promise_command(
         "xtp_run -e neighborlist -o {} -f {}",
         results['job_opts_neighborlist']['neighborlist'],
@@ -197,6 +118,10 @@ def run_eqm(results: dict) -> dict:
     """
     Run the eqm jobs.
     """
+    # set user-defined values
+    results['job_opts_eqm'] = edit_calculator_options(
+        results, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'])
+
     cmd_eqm_write = create_promise_command(
         "xtp_parallel -e eqm -o {} -f {} -s 0 -j write", results['job_opts_eqm']['eqm'],
         results['job_state']['state'])
@@ -216,6 +141,15 @@ def run_iqm(results: dict) -> dict:
     """
     Run the eqm jobs.
     """
+    # Copy option files
+    optionfiles = results['options']['path_optionfiles']
+    src = ["mbgft.xml", "xtpdft.xml"]
+    dst = ["mbgft_pair.xml", "xtpdft_pair.xml"]
+    copy_option_files(optionfiles, src, dst)
+
+    results['job_opts_iqm'] = edit_calculator_options(
+        results, ['iqm', 'xtpdft_pair', 'mbgft_pair'])
+
     # replace optionfiles with its absolute path
     path_optionfiles = results['options']['path_optionfiles']
     sections_to_edit = {
@@ -246,10 +180,22 @@ def run_iqm(results: dict) -> dict:
     return distribute_iqm_jobs(results)
 
 
+def run_qmmm(results: dict) -> dict:
+    """
+    QM/MM calculation
+    """
+    # results['job_opts_qmmm'] = edit_calculator_options(
+    #     results, ['qmmm'])
+    pass
+
+
 def run_config_xqmultipole(results: dict) -> dict:
     """
     Config the optionfiles to run the xqmultipole jobs
     """
+    results['job_opts_xqmultipole'] = edit_calculator_options(
+        results, ['jobwriter', 'xqmultipole'])
+
     workdir = results['options']['scratch_dir']
 
     cmd_setup_xqmultipole = create_promise_command(
@@ -343,12 +289,19 @@ def distribute_iqm_jobs(results: dict) -> dict:
     return distribute_job(dict_input, split_iqm_calculations)
 
 
-def write_output(output: dict, file_name: str="results.yml") -> None:
+def write_output(output: dict, file_name: str = "results.yml") -> None:
     """
     Write the `output` dictionary in YAML format.
     """
     with open(file_name, 'w') as f:
         yaml.dump(to_posix(output), f, default_flow_style=False)
+
+
+def copy_option_files(optionfiles, src, dst):
+    for s, d in zip(src, dst):
+        shutil.copyfile(
+            to_posix(optionfiles / s),
+            to_posix(optionfiles / d))
 
 
 def to_posix(d):
@@ -386,14 +339,6 @@ def initial_config(options: Dict) -> Dict:
     copy_tree(path_votcashare / 'xtp/xml', posix_optionfiles)
     shutil.copy(path_votcashare / 'ctp/xml/xqmultipole.xml', posix_optionfiles)
     copy_tree(path_votcashare / 'xtp/packages', posix_optionfiles)
-
-    if 'copy_option_files' in options:
-        src = options['copy_option_files']['src']
-        dst = options['copy_option_files']['dst']
-        for s, d in zip(src, dst):
-            shutil.copyfile(
-                to_posix(optionfiles / s),
-                to_posix(optionfiles / d))
 
     # Copy input provided by the user to tempfolder
     d = options.copy()

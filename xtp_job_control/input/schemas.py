@@ -1,12 +1,12 @@
 __all__ = ["schema_simulations"]
 
 from os.path import exists
-from schema import (Optional, Schema)
+from schema import (And, Optional, Schema, Use)
 from typing import (Dict, List)
 
 
 # "options to change from default templates
-schema_change_options = Schema({
+schema_votca_calculators_options = Schema({
 
     Optional("bsecoupling", default={}): Dict,
 
@@ -28,6 +28,8 @@ schema_change_options = Schema({
 
     Optional("neighborlist", default={}): Dict,
 
+    Optional("qmmm", default={}): Dict,
+
     Optional("xqmultipole", default={}): Dict,
 
     Optional("xtpdft", default={}): Dict,
@@ -37,22 +39,13 @@ schema_change_options = Schema({
     Optional("xtpdft_qmmm", default={}): Dict,
 })
 
-# Copy files from src to dest
-schema_copy_option_files = Schema({
-
-    # Source files
-    "src": List,
-
-    # Destination
-    "dst": List,
-})
-
 
 # Workflow input
 schema_simulations = Schema({
 
     # Name of the workflow to run
-    "workflow": str,
+    "workflow": And(str, Use(str.lower),
+                    lambda s: s in ("energies", "kmc")),
 
     # path to the VOTCASHARE folder
     "path_votcashare": exists,
@@ -81,9 +74,6 @@ schema_simulations = Schema({
     # number of iqm jobs to run. If null run all
     Optional("iqm_jobs", default=[]): List,
 
-    # Change options from template
-    Optional("change_options", default={}): schema_change_options,
-
-    # Copy files
-    Optional("copy_option_files", default={}): schema_copy_option_files
+    # Change_Options options from template
+    Optional("votca_calculators_options", default={}): schema_votca_calculators_options
 })
