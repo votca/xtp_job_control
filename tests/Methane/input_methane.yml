@@ -1,5 +1,5 @@
 workflow:
-  simulation
+  energies
 
 system:
   "tests/Methane/system.xml"

@@ -1,7 +1,7 @@
 __all__ = ["schema_simulations"]
 
 from os.path import exists
-from schema import (Optional, Schema)
+from schema import (And, Optional, Schema, Use)
 from typing import (Dict, List)
 
 
@@ -44,7 +44,8 @@ schema_votca_calculators_options = Schema({
 schema_simulations = Schema({
 
     # Name of the workflow to run
-    "workflow": str,
+    "workflow": And(str, Use(str.lower),
+                    lambda s: s in ("energies", "kmc")),
 
     # path to the VOTCASHARE folder
     "path_votcashare": exists,

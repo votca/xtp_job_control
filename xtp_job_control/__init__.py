@@ -1,4 +1,3 @@
-from .runner import run
-from .workflows.xtp_workflow import xtp_workflow
+from .workflows.run_workflow import run_workflow
 
-__all__ = ['run', 'xtp_workflow']
+__all__ = ['run_workflow']
