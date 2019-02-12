@@ -1,7 +1,9 @@
+from ..results import Options
 from .workflow_components import (
     call_xtp_cmd, create_promise_command,
     edit_jobs_file, edit_options, rename_map_file, run_parallel_jobs,
-    split_eqm_calculations, split_iqm_calculations, split_xqmultipole_calculations)
+    split_eqm_calculations, split_iqm_calculations, split_xqmultipole_calculations,
+    wait_till_done)
 from ..xml_editor import (edit_xml_file)
 from distutils.dir_util import copy_tree
 from pathlib import Path
@@ -32,23 +34,22 @@ def recursively_create_path(dict_input):
     return dict_input
 
 
-def edit_calculator_options(results: dict, sections: list) -> dict:
+def edit_calculator_options(results: dict, options: Options, sections: list) -> dict:
     """
     Edit the options of a calculator using the values provided by the user
     """
-    options = results['options']
-    path_optionfiles = options['path_optionfiles']
-    votca_calculators_options = options['votca_calculators_options']
+    path_optionfiles = options.path_optionfiles
+    votca_calculators_options = options.votca_calculators_options
 
     return edit_options(
         votca_calculators_options, sections, path_optionfiles)
 
 
-def edit_system_options(results: dict) -> dict:
+def edit_system_options(results: dict, options: Options) -> dict:
     """
     Adjust the links inside the system.xml file.
     """
-    mp_files = to_posix(results['options']['mp_files'].absolute())
+    mp_files = to_posix(options.mp_files.absolute())
     system_options = {
         'system': {
             'molecules': {"replace_regex_recursively":
@@ -56,40 +57,39 @@ def edit_system_options(results: dict) -> dict:
     }
 
     return edit_options(
-        system_options, ['system'], results['options']['scratch_dir'])
+        system_options, ['system'], options.scratch_dir)
 
 
-def run_einternal(results: dict) -> dict:
+def run_einternal(results: dict, options: Options) -> dict:
     """
     read in reorganisation energies stored in system.xml to state.sql
     """
-    einternal_file = results['options']['path_optionfiles'] / 'einternal.xml'
+    einternal_file = options.path_optionfiles / 'einternal.xml'
     cmd_einternal = create_promise_command(
         "xtp_run -e einternal -o {} -f {}", einternal_file, results['job_state']['state'])
     return call_xtp_cmd(
-        cmd_einternal, results['options']['scratch_dir'],
+        cmd_einternal, options.scratch_dir,
         expected_output={'einternal': einternal_file})
 
 
-def run_dump(results: dict) -> dict:
+def run_dump(results: dict, options: Options) -> dict:
     """
     output MD and QM mappings into extract.trajectory_md.pdb and extract.trajectory_qm.pdb files
     """
     cmd_dump = create_promise_command(
         "xtp_dump -e trajectory2pdb -f {}", results['job_state']['state'])
 
-    workdir = results['options']['scratch_dir']
-    return call_xtp_cmd(cmd_dump, workdir / "dump", expected_output={
+    return call_xtp_cmd(cmd_dump, options.scratch_dir / "dump", expected_output={
         'md_trajectory': 'extract.trajectory_md.pdb',
         'qm_trajectory': 'extract.trajectory_qm.pdb'})
 
 
-def run_neighborlist(results: dict) -> dict:
+def run_neighborlist(results: dict, options: Options) -> dict:
     """
     run neighborlist calculator
     """
     results['job_opts_neighborlist'] = edit_calculator_options(
-        results, ['neighborlist'])
+        results, options, ['neighborlist'])
 
     cmd_neighborlist = create_promise_command(
         "xtp_run -e neighborlist -o {} -f {}",
@@ -97,65 +97,72 @@ def run_neighborlist(results: dict) -> dict:
         results['job_state']['state'])
 
     return call_xtp_cmd(
-        cmd_neighborlist, results['options']['scratch_dir'], expected_output={
+        cmd_neighborlist, options.scratch_dir, expected_output={
             'neighborlist': "OPTIONFILES/neighborlist.xml",
             'state': 'state.sql'})
 
 
-def run_analyze(results: dict, analyze_file: Path) -> Dict:
+def run_analyze(results: dict, options: Options, analyze: str) -> Dict:
     """
     call eanalyze tool.
     """
-    workdir = results['options']['scratch_dir']
+    if analyze == 'eanalyze':
+        wait_till_done(results['jobs_eqm'])
+        expected_output = {
+            'sitecorr': "eanalyze.sitecorr*out", 'sitehist': "eanalyze.sitehist*out"}
+    else:
+        wait_till_done(results['jobs_iqm'])
+        expected_output = {
+            'ispatial': "ianalyze.ispatial_*.out"
+        }
+    path_analyze = options.path_optionfiles / "{}.xml".format(analyze)
     cmd_eanalyze = create_promise_command(
-        "xtp_run -e eanalyze -o {} -f {}", analyze_file, results['job_state']['state'])
-    return call_xtp_cmd(cmd_eanalyze, workdir / 'eanalyze', expected_output={
-        'sitecorr': "eanalyze.sitecorr*out",
-        'sitehist': "eanalyze.sitehist*out"})
+        "xtp_run -e {} -o {} -f {}", analyze, path_analyze, results['job_state']['state'])
+
+    return call_xtp_cmd(
+        cmd_eanalyze, options.scratch_dir / analyze, expected_output=expected_output)
 
 
-def run_eqm(results: dict) -> dict:
+def run_eqm(results: dict, options: Options) -> dict:
     """
     Run the eqm jobs.
     """
     # set user-defined values
     results['job_opts_eqm'] = edit_calculator_options(
-        results, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'])
+        results, options, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'])
 
     cmd_eqm_write = create_promise_command(
         "xtp_parallel -e eqm -o {} -f {} -s 0 -j write", results['job_opts_eqm']['eqm'],
         results['job_state']['state'])
     results['job_setup_eqm'] = call_xtp_cmd(
-        cmd_eqm_write, results['options']['scratch_dir'],
+        cmd_eqm_write, options.scratch_dir,
         expected_output={"eqm_jobs": "eqm.jobs"})
 
     # Select the number of jobs to run based on the input provided by the user
     results['job_select_eqm_jobs'] = edit_jobs_file(
         results['job_setup_eqm']['eqm_jobs'],
-        results['options']['eqm_jobs'])
+        options.eqm_jobs)
 
-    return distribute_eqm_jobs(results)
+    return distribute_eqm_jobs(results, options)
 
 
-def run_iqm(results: dict) -> dict:
+def run_iqm(results: dict, options: Options) -> dict:
     """
     Run the eqm jobs.
     """
     # Copy option files
-    optionfiles = results['options']['path_optionfiles']
     src = ["mbgft.xml", "xtpdft.xml"]
     dst = ["mbgft_pair.xml", "xtpdft_pair.xml"]
-    copy_option_files(optionfiles, src, dst)
+    copy_option_files(options.path_optionfiles, src, dst)
 
     results['job_opts_iqm'] = edit_calculator_options(
-        results, ['iqm', 'xtpdft_pair', 'mbgft_pair'])
+        results, options, ['iqm', 'xtpdft_pair', 'mbgft_pair'])
 
     # replace optionfiles with its absolute path
-    path_optionfiles = results['options']['path_optionfiles']
     sections_to_edit = {
             '': {
                 'replace_regex_recursively':
-                ('OPTIONFILES', to_posix(path_optionfiles))}
+                ('OPTIONFILES', to_posix(options.path_optionfiles))}
         }
 
     edited_iqm_file = schedule(edit_xml_file)(
@@ -168,16 +175,16 @@ def run_iqm(results: dict) -> dict:
     )
 
     results['job_setup_iqm'] = call_xtp_cmd(
-        cmd_iqm_write, results['options']['scratch_dir'] / 'iqm', expected_output={
+        cmd_iqm_write, options.scratch_dir / 'iqm', expected_output={
             'iqm_jobs': "iqm.jobs"}
     )
 
     # Select the number of jobs to run based on the input provided by the user
     results['job_select_iqm_jobs'] = edit_jobs_file(
         results['job_setup_iqm']['iqm_jobs'],
-        results['options']['iqm_jobs'])
+        options.iqm_jobs)
 
-    return distribute_iqm_jobs(results)
+    return distribute_iqm_jobs(results, options)
 
 
 def run_qmmm(results: dict) -> dict:
@@ -189,33 +196,33 @@ def run_qmmm(results: dict) -> dict:
     pass
 
 
-def run_config_xqmultipole(results: dict) -> dict:
+def run_config_xqmultipole(results: dict, options: Options) -> dict:
     """
     Config the optionfiles to run the xqmultipole jobs
     """
     results['job_opts_xqmultipole'] = edit_calculator_options(
-        results, ['jobwriter', 'xqmultipole'])
+        results, options, ['jobwriter', 'xqmultipole'])
 
-    workdir = results['options']['scratch_dir']
-
+    # command for jobwriter runner
     cmd_setup_xqmultipole = create_promise_command(
         "xtp_run -e jobwriter -o {} -f {} -s 0",
         results['job_opts_xqmultipole']['jobwriter'], results['job_state']['state'])
 
+    # schedule command
     results['job_setup_xqmultipole'] = call_xtp_cmd(
-        cmd_setup_xqmultipole, workdir / "xqmultipole", expected_output={
+        cmd_setup_xqmultipole, options.scratch_dir / "xqmultipole", expected_output={
             'mps_tab': 'jobwriter.mps.background.tab',
             'xqmultipole_jobs': 'jobwriter.mps.monomer.xml'})
 
     # change path of the MP_FILES
-    mp_files = to_posix(results['options']['mp_files'].absolute())
+    mp_files = to_posix(options.mp_files.absolute())
     results['job_setup_xqmultipole']['mps_tab'] = rename_map_file(
         results['job_setup_xqmultipole']['mps_tab'], "MP_FILES", mp_files)
 
     # Run only the jobs specified by the user
     return edit_jobs_file(
         results['job_setup_xqmultipole']['xqmultipole_jobs'],
-        results['options']['xqmultipole_jobs'])
+        options.xqmultipole_jobs)
 
 
 def distribute_job(dict_input: dict, split_function: Callable) -> dict:
@@ -227,14 +234,14 @@ def distribute_job(dict_input: dict, split_function: Callable) -> dict:
     return run_parallel_jobs(dict_jobs, lift(dict_input))
 
 
-def distribute_xqmultipole_jobs(results: dict) -> dict:
+def distribute_xqmultipole_jobs(results: dict, options: Options) -> dict:
     """
     Run the xqmultipole_jobs independently
     """
     dict_input = {
         'name': 'xqmultipole',
-        'scratch_dir': results['options']['scratch_dir'],
-        'mp_files': results['options']['mp_files'],
+        'scratch_dir': options.scratch_dir,
+        'mp_files': options.mp_files,
         'xqmultipole_jobs': results['job_setup_xqmultipole']['xqmultipole_jobs'],
         'xqmultipole': results['job_opts_xqmultipole']['xqmultipole'],
         'system': results['job_system']['system'],
@@ -247,17 +254,17 @@ def distribute_xqmultipole_jobs(results: dict) -> dict:
     return distribute_job(dict_input, split_xqmultipole_calculations)
 
 
-def distribute_eqm_jobs(results: dict) -> dict:
+def distribute_eqm_jobs(results: dict, options: Options) -> dict:
     """
     Run the eqm job in separated folders
     """
     dict_input = {
         'name': 'eqm',
-        'scratch_dir': results['options']['scratch_dir'],
+        'scratch_dir': options.scratch_dir,
         'eqm_jobs': results['job_setup_eqm']['eqm_jobs'],
         'state': results['job_state']['state'],
         'eqm': results['job_opts_eqm']['eqm'],
-        'path_optionfiles': results['options']['path_optionfiles'],
+        'path_optionfiles': options.path_optionfiles,
         'cmd_options': "-s 0 -j run -c 1 -t 1",
         'expected_output': {
             'tab': 'job.tab', 'orb': 'system.orb'}
@@ -265,17 +272,17 @@ def distribute_eqm_jobs(results: dict) -> dict:
     return distribute_job(dict_input, split_eqm_calculations)
 
 
-def distribute_iqm_jobs(results: dict) -> dict:
+def distribute_iqm_jobs(results: dict, options: Options) -> dict:
     """
     Run the iqm jobs independently
     """
     dict_input = {
         'name': 'iqm',
-        'scratch_dir': results['options']['scratch_dir'],
+        'scratch_dir': options.scratch_dir,
         'iqm_jobs': results['job_setup_iqm']['iqm_jobs'],
         'state': results['job_neighborlist']['state'],
         'iqm': results['job_opts_iqm']['iqm'],
-        'path_optionfiles': results['options']['path_optionfiles'],
+        'path_optionfiles': options.path_optionfiles,
         'cmd_options': "-s 0 -j run -c 1 -t 1",
         'expected_output': {
             'tab': 'job.tab'
@@ -289,10 +296,12 @@ def distribute_iqm_jobs(results: dict) -> dict:
     return distribute_job(dict_input, split_iqm_calculations)
 
 
-def write_output(output: dict, file_name: str = "results.yml") -> None:
+def write_output(output: dict, options: Options, file_name: str = "results.yml") -> None:
     """
     Write the `output` dictionary in YAML format.
     """
+    # Transform the options to a plain dictionary
+    output['options'] = dict(options)
     with open(file_name, 'w') as f:
         yaml.dump(to_posix(output), f, default_flow_style=False)
 

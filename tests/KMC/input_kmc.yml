@@ -4,6 +4,9 @@ workflow:
 state_file:
   "tests/KMC/state.sql"
 
+path_votcashare:
+  "tests/test_files/votca"
+  
 votca_calculators_options:
   kmcmultiple:
     runtime: 1000

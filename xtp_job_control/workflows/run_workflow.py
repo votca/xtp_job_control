@@ -1,4 +1,5 @@
 from ..input import validate_input
+from ..results import Options
 from .xtp_workflow import (initial_config, recursively_create_path)
 from .energies import energies_workflow
 from .kmc import kmc_workflow
@@ -18,7 +19,7 @@ def run_workflow(options: dict):
     options.update(input_dict)
 
     # Setup environment to run xtp
-    options = initial_config(options)
+    options = Options(initial_config(options))
 
     # Run the given workflow
     fun = available_workflows[options['workflow']]

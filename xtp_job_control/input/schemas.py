@@ -49,7 +49,10 @@ schema_kmc = Schema({
     "workflow": And(str, Use(str.lower),
                     lambda s: s in ("kmc")),
 
-    "state": exists,
+    # path to the VOTCASHARE folder
+    "path_votcashare": exists,
+
+    "state_file": exists,
 
     # Change_Options options from template
     Optional("votca_calculators_options", default={}): schema_votca_calculators_options

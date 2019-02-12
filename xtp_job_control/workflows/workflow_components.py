@@ -2,6 +2,7 @@ from ..xml_editor import (
     create_job_file, edit_xml_job_file, edit_xml_options, read_available_jobs)
 from collections import defaultdict
 from noodles import schedule
+from noodles.interface import PromisedObject
 from pathlib import Path
 from subprocess import (PIPE, Popen)
 from typing import (Dict, List)
@@ -51,6 +52,14 @@ def retrieve_ouput(workdir: str, expected_file: str) -> str:
         return path.as_posix()
     else:
         return list(p.as_posix() for p in workdir.rglob(expected_file))
+
+
+@schedule
+def wait_till_done(job: PromisedObject) -> None:
+    """
+    Add an implicit dependency from `job` to the caller of this functins
+    """
+    pass
 
 
 @schedule
