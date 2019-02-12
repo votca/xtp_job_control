@@ -9,7 +9,7 @@ from .workflow_components import call_xtp_cmd
 
 def energies_workflow(options: dict) -> object:
     """
-    Use the `options` to create a workflow
+    Use the `options` to create a workflow to compute energies
     """
     workdir = options.scratch_dir
 
@@ -67,6 +67,7 @@ def energies_workflow(options: dict) -> object:
     # results['job_qmmm'] = 
     # RUN the workflow
     output = run(results)
-    write_output(output, options)
+    path_output = "results_energies.yml"
+    write_output(output, options, path_output)
 
-    print("check output file: results.yml")
+    print("check output file: ", path_output)

@@ -1,10 +1,11 @@
-import re
-import xml.etree.ElementTree as ET
+from .results import Options
 from os.path import join
 from typing import (Any, Dict, List)
+import re
+import xml.etree.ElementTree as ET
 
 
-def edit_xml_options(options: Dict, path: str) -> Dict:
+def edit_xml_options(options: Options, path: str) -> Dict:
     """
     Go through the `options` file: sections dictionary
     and  edit the corresponding XML file by replacing
@@ -95,7 +96,7 @@ def edit_xml_job_file(path_file: str, jobs_to_run: List):
     return path_file
 
 
-def read_available_jobs(path_file: str, state: str="AVAILABLE") -> List:
+def read_available_jobs(path_file: str, state: str = "AVAILABLE") -> List:
     """
     Search for jobs with `state`
     """
@@ -120,3 +121,19 @@ def create_job_file(job: object, job_file: str):
 
     tree = ET.ElementTree(root)
     tree.write(job_file)
+
+
+def add_absolute_path_to_options(path_xml: str, options: Options) -> None:
+    """
+    Replace the relative paths to the optionfiles inside a `path_xml` file with the
+    correspoding absolute values.
+    """
+    names = [x.name for x in options.path_optionfiles.glob("*xml")]
+    tree = ET.parse(path_xml)
+    root = tree.getroot()
+
+    for section in root.iter():
+        for elem in section.iter():
+            if elem.text is not None and elem.text in names:
+                path = options.path_optionfiles / elem.text
+                elem.text = path.as_posix()

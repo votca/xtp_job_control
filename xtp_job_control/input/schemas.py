@@ -10,9 +10,13 @@ schema_votca_calculators_options = Schema({
 
     Optional("bsecoupling", default={}): Dict,
 
+    Optional("dftgwbse", default={}): Dict,
+
     Optional("eqm", default={}): Dict,
 
     Optional("esp2multipole", default={}): Dict,
+
+    Optional("gen_cube", default={}): Dict,
 
     Optional("iqm", default={}): Dict,
 
@@ -31,6 +35,8 @@ schema_votca_calculators_options = Schema({
     Optional("mbgft_qmmm", default={}): Dict,
 
     Optional("neighborlist", default={}): Dict,
+
+    Optional("partialcharges", default={}): Dict,
 
     Optional("qmmm", default={}): Dict,
 
@@ -59,6 +65,22 @@ schema_kmc = Schema({
     # Change_Options options from template
     Optional("votca_calculators_options", default={}): schema_votca_calculators_options
 
+})
+
+schema_dftgwbse = Schema({
+
+    # Name of the workflow to run
+    "workflow": And(str, Use(str.lower),
+                    lambda s: s in ("dftgwbse")),
+
+    # path to the VOTCASHARE folder
+    "path_votcashare": exists,
+
+    # Molecular geometry:
+    "molecule": exists,
+
+    # Change_Options options from template
+    Optional("votca_calculators_options", default={}): schema_votca_calculators_options
 })
 
 
