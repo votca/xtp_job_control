@@ -1,0 +1,27 @@
+workflow:
+  dftgwbse
+
+molecule: "tests/DFT_GWBSE/dftgwbse_CH4/methane.xyz"
+
+path_votcashare:
+  "tests/test_files/votca"
+
+votca_calculators_options:
+  dftgwbse:
+    dftpackage: xtpdft.xml
+
+  esp2multipole:
+    openmp: 1
+
+  gen_cube:
+    output: methane.cube
+
+  mbgft:
+    openmp: 1
+
+  partialcharges:
+    output: methane.mps
+
+  xtpdft:
+    threads: 1
+
