@@ -4,6 +4,9 @@ workflow:
 state_file:
   "tests/KMC/state.sql"
 
+lifetimes_file:
+  "tests/KMC/lifetimes.xml"
+
 path_votcashare:
   "tests/test_files/votca"
   

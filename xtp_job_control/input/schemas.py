@@ -54,6 +54,8 @@ schema_kmc = Schema({
 
     "state_file": exists,
 
+    Optional("lifetimes_file", default="lifetimes.xml"): exists,
+
     # Change_Options options from template
     Optional("votca_calculators_options", default={}): schema_votca_calculators_options
 
