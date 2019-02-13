@@ -50,7 +50,7 @@ def energies_workflow(options: dict) -> object:
     # # step einternal
     # read in reorganization energies stored in system.xml to state.sql
     results['job_einternal'] = run_einternal(results, options)
-
+    
     # step eqm
     results['jobs_eqm'] = run_eqm(results, options)
 

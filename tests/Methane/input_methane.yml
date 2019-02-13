@@ -43,9 +43,9 @@ votca_calculators_options:
       induce: 0
     control:
       pdb_check: 0
-      delete_entry: write_chk
+      delete_entry: write_chk    
 
-      xtpdft:
+  xtpdft:
     threads: 0
   
   mbgft:
