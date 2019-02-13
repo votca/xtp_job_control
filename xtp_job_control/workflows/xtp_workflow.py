@@ -44,7 +44,7 @@ def edit_calculator_options(options: Options, sections: list) -> dict:
 
 def edit_system_options(results: Results, options: Options) -> dict:
     """
-    Adjust the links inside the system.xml file.
+    Add options provided by the user to the respective calculator configuration.
     """
     mp_files = to_posix(options.mp_files.absolute())
     system_options = {
@@ -115,6 +115,11 @@ def run_dftgwbse(results: Results, options: Options) -> dict:
     # Add molecule, basis, functional, etc. to the calculator options
     options.votca_calculators_options["dftgwbse"]["molecule"] = options.molecule
     options.votca_calculators_options["dftgwbse"]["mode"] = options.mode
+
+    # mbgft
+    options.votca_calculators_options["mbgft"]["dftbasis"] = options.dftbasis
+    options.votca_calculators_options["mbgft"]["gwbasis"] = options.gwbasis
+    options.votca_calculators_options["mbgft"]["vxc"] = {"functional": options.functional}
 
     # edit calculators options
     opts = edit_calculator_options(options, ['dftgwbse', 'mbgft', 'xtpdft'])

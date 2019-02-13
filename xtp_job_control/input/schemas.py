@@ -81,11 +81,11 @@ schema_dftgwbse = Schema({
     "molecule": exists,
 
     # Functional
-    Optional("functional"): str,
+    Optional("functional", default="XC_HYB_GGA_XC_PBEH"): str,
 
     # Basis
-    Optional("dft_basis"): str,
-    Optional("gwbasis"): str,
+    Optional("dftbasis", default="ubecppol"): str,
+    Optional("gwbasis", default="aux-ubecppol"): str,
 
     # path to the VOTCASHARE folder
     "path_votcashare": exists,

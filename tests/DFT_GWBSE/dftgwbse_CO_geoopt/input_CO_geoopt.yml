@@ -4,7 +4,7 @@ workflow:
 mode:
   optimze
 
-dft_basis:
+dftbasis:
   "ubecppol"
 
 gwbasis:
