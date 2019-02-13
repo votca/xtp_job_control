@@ -24,5 +24,6 @@ def run_workflow(options: dict):
     options = Options(initial_config(options))
 
     # Run the given workflow
-    fun = available_workflows[options['workflow']]
+    print("running workflow: ", options.workflow)
+    fun = available_workflows[options.workflow]
     fun(options)
