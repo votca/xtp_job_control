@@ -1,10 +1,10 @@
 from ..results import (Options, Results)
 from .workflow_components import (
     call_xtp_cmd, create_promise_command,
-    edit_jobs_file, edit_options, rename_map_file, run_parallel_jobs,
+    edit_jobs_file, edit_options, edit_path_options, rename_map_file, run_parallel_jobs,
     split_eqm_calculations, split_iqm_calculations, split_xqmultipole_calculations,
     wait_till_done)
-from ..xml_editor import (edit_xml_file)
+from ..xml_editor import edit_xml_file
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from noodles import (lift, schedule)
@@ -38,11 +38,8 @@ def edit_calculator_options(options: Options, sections: list) -> dict:
     """
     Edit the options of a calculator using the values provided by the user
     """
-    path_optionfiles = options.path_optionfiles
-    votca_calculators_options = options.votca_calculators_options
-
     return edit_options(
-        votca_calculators_options, sections, path_optionfiles)
+        options.votca_calculators_options, sections, options.path_optionfiles)
 
 
 def edit_system_options(results: Results, options: Options) -> dict:
@@ -118,6 +115,7 @@ def run_dftgwbse(results: Results, options: Options) -> dict:
     # Add molecule, basis, functional, etc. to the calculator options
     options.votca_calculators_options["dftgwbse"]["molecule"] = options.molecule
 
+    # edit calculators options
     opts = edit_calculator_options(options, ['dftgwbse', 'mbgft', 'xtpdft'])
 
     cmd_dftgwbse = create_promise_command(

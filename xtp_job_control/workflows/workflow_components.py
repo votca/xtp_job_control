@@ -1,5 +1,6 @@
 from ..xml_editor import (
-    create_job_file, edit_xml_job_file, edit_xml_options, read_available_jobs)
+    add_absolute_path_to_options, create_job_file, edit_xml_job_file,
+    edit_xml_options, read_available_jobs)
 from collections import defaultdict
 from noodles import schedule
 from noodles.interface import PromisedObject
@@ -72,6 +73,14 @@ def edit_options(options: Dict, names_xml_files: List,  path_optionfiles: str) -
 
     sections_to_edit = {name: options[name] for name in names_xml_files}
     return edit_xml_options(sections_to_edit, path_optionfiles)
+
+
+@schedule
+def edit_path_options(path_xml: str, path_optionfiles: Path) -> str:
+    """
+    replace relative path by absolute ones at `path_xml`
+    """
+    return add_absolute_path_to_options(path_xml, path_optionfiles)
 
 
 @schedule

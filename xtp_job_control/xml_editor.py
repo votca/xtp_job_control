@@ -1,25 +1,26 @@
-from .results import Options
 from os.path import join
+from pathlib import Path
 from typing import (Any, Dict, List)
 import re
 import xml.etree.ElementTree as ET
 
 
-def edit_xml_options(options: Options, path: str) -> Dict:
+def edit_xml_options(sections: dict, path_optionfiles: Path) -> Dict:
     """
     Go through the `options` file: sections dictionary
     and  edit the corresponding XML file by replacing
     `sections` in the XML file.
     """
     def call_xml_editor(xml_file, sections):
-        path_file = path / '{}.xml'.format(xml_file)
-        return edit_xml_file(path_file.as_posix(), xml_file, sections)
+        path_file = path_optionfiles / '{}.xml'.format(xml_file)
+        edited_file = edit_xml_file(path_file.as_posix(), xml_file, sections)
+        return add_absolute_path_to_options(edited_file, path_optionfiles)
 
     return {xml_file: call_xml_editor(xml_file, section)
-            for xml_file, section in options.items()}
+            for xml_file, section in sections.items()}
 
 
-def edit_xml_file(path: str, xml_file: str, sections: Dict) -> dict:
+def edit_xml_file(path: str, xml_file: str, sections: Dict) -> str:
     """
     Parse the `path` XML file and replace the nodes
     given in `sections` in the XML tree. Finally write
@@ -123,17 +124,22 @@ def create_job_file(job: object, job_file: str):
     tree.write(job_file)
 
 
-def add_absolute_path_to_options(path_xml: str, options: Options) -> None:
+def add_absolute_path_to_options(path_xml: str, path_optionfiles: Path) -> None:
     """
     Replace the relative paths to the optionfiles inside a `path_xml` file with the
     correspoding absolute values.
     """
-    names = [x.name for x in options.path_optionfiles.glob("*xml")]
+    names = [x.name for x in path_optionfiles.glob("*xml")]
     tree = ET.parse(path_xml)
     root = tree.getroot()
 
     for section in root.iter():
         for elem in section.iter():
-            if elem.text is not None and elem.text in names:
-                path = options.path_optionfiles / elem.text
+            val = elem.text
+            if (val is not None) and (".xml" in val) and (val in names):
+                path = path_optionfiles / elem.text
                 elem.text = path.as_posix()
+
+    tree.write(path_xml, short_empty_elements=False)
+
+    return path_xml
