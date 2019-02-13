@@ -68,6 +68,8 @@ def edit_options(options: Dict, names_xml_files: List,  path_optionfiles: str) -
     Edit a list of XML files `names_xml_files` that are located in the
     `path_optionfiles` using a set of user-defined `options`.
     """
+    # Replace relative path with absolute ones in the calculators options
+
     sections_to_edit = {name: options[name] for name in names_xml_files}
     return edit_xml_options(sections_to_edit, path_optionfiles)
 

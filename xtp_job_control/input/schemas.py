@@ -73,11 +73,18 @@ schema_dftgwbse = Schema({
     "workflow": And(str, Use(str.lower),
                     lambda s: s in ("dftgwbse")),
 
-    # path to the VOTCASHARE folder
-    "path_votcashare": exists,
-
     # Molecular geometry:
     "molecule": exists,
+
+    # Functional
+    Optional("functional", default="XC_HYB_GGA_XC_PBEH"): str,
+
+    # Basis
+    Optional("dft_basis", default="ubecppol"): str,
+    Optional("gwbasis", default="aux-ubecppol"): str,
+
+    # path to the VOTCASHARE folder
+    "path_votcashare": exists,
 
     # Change_Options options from template
     Optional("votca_calculators_options", default={}): schema_votca_calculators_options

@@ -34,7 +34,7 @@ def recursively_create_path(dict_input):
     return dict_input
 
 
-def edit_calculator_options(results: Results, options: Options, sections: list) -> dict:
+def edit_calculator_options(options: Options, sections: list) -> dict:
     """
     Edit the options of a calculator using the values provided by the user
     """
@@ -85,8 +85,7 @@ def run_config_xqmultipole(results: Results, options: Options) -> dict:
     """
     Config the optionfiles to run the xqmultipole jobs
     """
-    results['job_opts_xqmultipole'] = edit_calculator_options(
-        results, options, ['jobwriter', 'xqmultipole'])
+    results['job_opts_xqmultipole'] = edit_calculator_options(options, ['jobwriter', 'xqmultipole'])
 
     # command for jobwriter runner
     cmd_setup_xqmultipole = create_promise_command(
@@ -116,11 +115,10 @@ def run_dftgwbse(results: Results, options: Options) -> dict:
     """
     logger.info("Running dft + gwbse, output can be found in dftgwbse.log")
 
-    # Add molecule to xml
+    # Add molecule, basis, functional, etc. to the calculator options
     options.votca_calculators_options["dftgwbse"]["molecule"] = options.molecule
 
-    opts = edit_calculator_options(
-        results, options, ['dftgwbse', 'mbgft', 'xtpdft'])
+    opts = edit_calculator_options(options, ['dftgwbse', 'mbgft', 'xtpdft'])
 
     cmd_dftgwbse = create_promise_command(
         "xtp_tools -e dftgwbse -o {} > dftgwbse.log", opts['dftgwbse'])
@@ -159,7 +157,7 @@ def run_eqm(results: Results, options: Options) -> dict:
     """
     # set user-defined values
     results['job_opts_eqm'] = edit_calculator_options(
-        results, options, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'])
+        options, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'])
 
     cmd_eqm_write = create_promise_command(
         "xtp_parallel -e eqm -o {} -f {} -s 0 -j write", results['job_opts_eqm']['eqm'],
@@ -180,8 +178,7 @@ def run_gencube(results: Results, options: Options) -> dict:
     """
     Compute partial charges
     """
-    opts = edit_calculator_options(
-        results, options, ['gencube'])
+    opts = edit_calculator_options(options, ['gencube'])
 
     args = create_promise_command(
         "xtp_tools -e gencube -o {}", opts['gencube'])
@@ -199,7 +196,7 @@ def run_iqm(results: Results, options: Options) -> dict:
     copy_option_files(options.path_optionfiles, src, dst)
 
     results['job_opts_iqm'] = edit_calculator_options(
-        results, options, ['iqm', 'xtpdft_pair', 'mbgft_pair'])
+        options, ['iqm', 'xtpdft_pair', 'mbgft_pair'])
 
     # replace optionfiles with its absolute path
     sections_to_edit = {
@@ -235,8 +232,7 @@ def run_kmcmultiple(results: Results, options: Options) -> dict:
     Run a kmcmultiple job
     """
 
-    results['job_opts_kmcmultiple'] = edit_calculator_options(
-        results, options, ['kmcmultiple'])
+    results['job_opts_kmcmultiple'] = edit_calculator_options(options, ['kmcmultiple'])
 
     args = create_promise_command(
         "xtp_run -e kmcmultiple -o {} -f {}", results['job_opts_kmcmultiple']['kmcmultiple'],
@@ -256,8 +252,7 @@ def run_kmclifetime(results: Results, options: Options) -> dict:
     wait_till_done(results['job_kmcmultiple'])
 
     options.votca_calculators_options["kmclifetime"]["lifetimefile"] = options.lifetimes_file
-    results['job_opts_kmclifetime'] = edit_calculator_options(
-        results, options, ['kmclifetime'])
+    results['job_opts_kmclifetime'] = edit_calculator_options(options, ['kmclifetime'])
 
     args = create_promise_command(
         "xtp_run -e kmclifetime -o {} -f {}", results['job_opts_kmclifetime']['kmclifetime'],
@@ -271,8 +266,7 @@ def run_neighborlist(results: Results, options: Options) -> dict:
     """
     run neighborlist calculator
     """
-    results['job_opts_neighborlist'] = edit_calculator_options(
-        results, options, ['neighborlist'])
+    results['job_opts_neighborlist'] = edit_calculator_options(options, ['neighborlist'])
 
     cmd_neighborlist = create_promise_command(
         "xtp_run -e neighborlist -o {} -f {}",
@@ -289,8 +283,7 @@ def run_partialcharges(results: Results, options: Options) -> dict:
     """
     Compute partial charges
     """
-    opts = edit_calculator_options(
-        results, options, ['esp2multipole', 'partialcharges'])
+    opts = edit_calculator_options(options, ['esp2multipole', 'partialcharges'])
 
     logger.info("Running CHELPG fit")
 

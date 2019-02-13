@@ -1,7 +1,17 @@
 workflow:
   dftgwbse
 
-molecule: "tests/DFT_GWBSE/dftgwbse_CH4/methane.xyz"
+dft_basis:
+  "ubecppol"
+
+gwbasis:
+  "aux-ubecppol"
+  
+functional:
+  "XC_HYB_GGA_XC_PBEH"
+  
+molecule:
+  "tests/DFT_GWBSE/dftgwbse_CH4/methane.xyz"
 
 path_votcashare:
   "tests/test_files/votca"
