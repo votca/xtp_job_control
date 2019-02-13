@@ -41,15 +41,15 @@ def energies_workflow(options: dict) -> object:
     # Change options neighborlist
     results['job_neighborlist'] = run_neighborlist(results, options)
 
-    # # step einternal
-    # read in reorganization energies stored in system.xml to state.sql
-    results['job_einternal'] = run_einternal(results, options)
-
     # step config xqmultipole
     results['job_select_xqmultipole_jobs'] = run_config_xqmultipole(results, options)
 
     # Run xqmultipole jobs in parallel
     results['jobs_xqmultipole'] = distribute_xqmultipole_jobs(results, options)
+
+    # # step einternal
+    # read in reorganization energies stored in system.xml to state.sql
+    results['job_einternal'] = run_einternal(results, options)
 
     # step eqm
     results['jobs_eqm'] = run_eqm(results, options)

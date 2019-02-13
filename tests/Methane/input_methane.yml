@@ -45,13 +45,7 @@ votca_calculators_options:
       pdb_check: 0
       delete_entry: write_chk
 
-  eqm:
-    dftpackage:
-      "OPTIONFILES/xtpdft.xml"
-    gwbse_options:
-      "OPTIONFILES/mbgft.xml"
-
-  xtpdft:
+      xtpdft:
     threads: 0
   
   mbgft:

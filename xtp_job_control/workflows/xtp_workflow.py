@@ -158,7 +158,7 @@ def run_einternal(results: Results, options: Options) -> dict:
 def run_eqm(results: Results, options: Options) -> dict:
     """
     Run the eqm jobs.
-    """
+    """ 
     # set user-defined values
     results['job_opts_eqm'] = edit_calculator_options(
         options, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'])

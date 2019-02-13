@@ -137,7 +137,7 @@ def add_absolute_path_to_options(path_xml: str, path_optionfiles: Path) -> None:
         for elem in section.iter():
             val = elem.text
             if (val is not None) and (".xml" in val) and (val in names):
-                path = path_optionfiles / elem.text
+                path = path_optionfiles / Path(elem.text).name
                 elem.text = path.as_posix()
 
     tree.write(path_xml, short_empty_elements=False)

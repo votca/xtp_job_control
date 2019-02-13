@@ -12,7 +12,10 @@ schema_votca_calculators_options = Schema({
 
     Optional("dftgwbse", default={"dftpackage": "xtpdft.xml"}): Dict,
 
-    Optional("eqm", default={}): Dict,
+    Optional(
+        "eqm", default={
+            "gwbse_options": "mbgft.xml", "dftpackage": "xtpdft.xml",
+            "esp_options": "esp2multipole.xml"}): Dict,
 
     Optional("esp2multipole", default={}): Dict,
 

@@ -1,6 +1,6 @@
 from ..xml_editor import (
-    add_absolute_path_to_options, create_job_file, edit_xml_job_file,
-    edit_xml_options, read_available_jobs)
+    add_absolute_path_to_options, create_job_file, edit_xml_file,
+    edit_xml_job_file, edit_xml_options, read_available_jobs)
 from collections import defaultdict
 from noodles import schedule
 from noodles.interface import PromisedObject
@@ -160,20 +160,14 @@ def split_eqm_calculations(input_dict: dict) -> dict:
     Split the jobs specified in eqm.jobs into independent jobs.
     """
     results = split_calculations(input_dict, 'eqm_jobs')
-    path_optionfiles = input_dict['path_optionfiles'].as_posix()
+    # path_optionfiles = input_dict['path_optionfiles']
 
     for idx, config in results.items():
         workdir = config['workdir']
-        options = {
-            'eqm': {
-                'job_file': config['job'].name,
-                '': {'replace_regex_recursively':
-                     ('OPTIONFILES', path_optionfiles)}
-            }
-        }
-        edited_files = edit_xml_options(options, workdir)
-        results[idx]['eqm'] = edited_files['eqm']
+        sections = {'job_file': config['job'].as_posix()}
 
+        path_file = workdir / 'eqm.xml'
+        results[idx]['eqm'] = edit_xml_file(path_file.as_posix(), 'eqm', sections)
     return {k: v for k, v in results.items()}
 
 
