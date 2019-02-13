@@ -2,11 +2,12 @@ from ..xml_editor import (
     add_absolute_path_to_options, create_job_file, edit_xml_file,
     edit_xml_job_file, edit_xml_options, read_available_jobs)
 from collections import defaultdict
+from functools import wraps
 from noodles import schedule
 from noodles.interface import PromisedObject
 from pathlib import Path
 from subprocess import (PIPE, Popen)
-from typing import (Dict, List)
+from typing import (Callable, Dict, List)
 import logging
 import re
 import shutil
@@ -55,12 +56,19 @@ def retrieve_ouput(workdir: str, expected_file: str) -> str:
         return list(p.as_posix() for p in workdir.rglob(expected_file))
 
 
-@schedule
-def wait_till_done(job: PromisedObject) -> None:
+def wait_dependencies(fun: Callable):
     """
-    Add an implicit dependency from `job` to the caller of this functins
+    Add an implicit dependency from `job` to the caller of this function
     """
-    pass
+    @wraps(fun)
+    def wrapper(*args, **kwargs):
+        dependencies = kwargs.get('dependencies')
+        if dependencies is not None:
+            for d in dependencies:
+                assert isinstance(d, PromisedObject)
+        return fun(*args)
+
+    return wrapper
 
 
 @schedule
@@ -121,6 +129,9 @@ def run_parallel_jobs(dict_jobs: dict, dict_input: dict) -> dict:
             expected_output=dict_input['expected_output'])
         for k, val in output.items():
             results[key][k] = val
+
+    # Pack the state in the ouput
+    results.update({'state': dict_input['scratch_dir'] / 'state.sql'})
 
     return results
 

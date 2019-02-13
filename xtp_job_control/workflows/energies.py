@@ -2,7 +2,7 @@ from ..results import Results
 from ..runner import run
 from .xtp_workflow import (
     create_promise_command, edit_system_options, distribute_xqmultipole_jobs,
-    run_analyze, run_config_xqmultipole,
+    run_eanalyze, run_ianalyze, run_config_xqmultipole,
     run_dump, run_einternal, run_eqm, run_iqm, run_neighborlist, write_output)
 from .workflow_components import call_xtp_cmd
 
@@ -41,27 +41,27 @@ def energies_workflow(options: dict) -> object:
     # Change options neighborlist
     results['job_neighborlist'] = run_neighborlist(results, options)
 
+    # # step einternal
+    # read in reorganization energies stored in system.xml to state.sql
+    results['job_einternal'] = run_einternal(results, options)
+
     # step config xqmultipole
     results['job_select_xqmultipole_jobs'] = run_config_xqmultipole(results, options)
 
     # Run xqmultipole jobs in parallel
     results['jobs_xqmultipole'] = distribute_xqmultipole_jobs(results, options)
 
-    # # step einternal
-    # read in reorganization energies stored in system.xml to state.sql
-    results['job_einternal'] = run_einternal(results, options)
-    
+    # step eanalyze
+    results['job_eanalyze'] = run_eanalyze(results, options, state=results['job_state']['state'])
+
     # step eqm
     results['jobs_eqm'] = run_eqm(results, options)
 
     # step iqm
     results['jobs_iqm'] = run_iqm(results, options)
 
-    # step eanalyze
-    results['job_eanalyze'] = run_analyze(results, options, "eanalyze")
-
     # step ianalyze
-    results['job_ianalyze'] = run_analyze(results, options, "ianalyze")
+    results['job_ianalyze'] = run_ianalyze(results, options, state=results['jobs_iqm']['state'])
 
     # # step qmmm
     # results['job_qmmm'] = 

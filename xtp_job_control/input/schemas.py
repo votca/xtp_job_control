@@ -61,7 +61,7 @@ schema_kmc = Schema({
     # path to the VOTCASHARE folder
     "path_votcashare": exists,
 
-    "state_file": exists,
+    "state": exists,
 
     Optional("lifetimes_file", default="lifetimes.xml"): exists,
 

@@ -2,12 +2,12 @@ from ..results import (Options, Results)
 from .workflow_components import (
     call_xtp_cmd, create_promise_command,
     edit_jobs_file, edit_options, rename_map_file, run_parallel_jobs,
-    split_eqm_calculations, split_iqm_calculations, split_xqmultipole_calculations,
-    wait_till_done)
+    split_eqm_calculations, split_iqm_calculations, split_xqmultipole_calculations)
 from ..xml_editor import edit_xml_file
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from noodles import (lift, schedule)
+from noodles.interface import PromisedObject
 from typing import (Callable, Dict)
 import datetime
 import logging
@@ -57,25 +57,33 @@ def edit_system_options(results: Results, options: Options) -> dict:
         system_options, ['system'], options.scratch_dir)
 
 
-def run_analyze(results: Results, options: Options, analyze: str) -> Dict:
+def run_eanalyze(results: Results, options: Options, state: PromisedObject) -> Dict:
     """
     call eanalyze tool.
     """
-    if analyze == 'eanalyze':
-        wait_till_done(results['jobs_eqm'])
-        expected_output = {
-            'sitecorr': "eanalyze.sitecorr*out", 'sitehist': "eanalyze.sitehist*out"}
-    else:
-        wait_till_done(results['jobs_iqm'])
-        expected_output = {
-            'ispatial': "ianalyze.ispatial_*.out"
-        }
-    path_analyze = options.path_optionfiles / "{}.xml".format(analyze)
+    expected_output = {
+        'sitecorr': "eanalyze.sitecorr*out", 'sitehist': "eanalyze.sitehist*out"}
+
+    path_analyze = options.path_optionfiles / "eanalyze.xml"
     cmd_eanalyze = create_promise_command(
-        "xtp_run -e {} -o {} -f {}", analyze, path_analyze, results['job_state']['state'])
+        "xtp_run -e eanalyze -o {} -f {}", path_analyze, state)
 
     return call_xtp_cmd(
-        cmd_eanalyze, options.scratch_dir / analyze, expected_output=expected_output)
+        cmd_eanalyze, options.scratch_dir / 'eanalyze', expected_output=expected_output)
+
+
+def run_ianalyze(results: Results, options: Options, state: PromisedObject) -> Dict:
+    """
+    call eanalyze tool.
+    """
+    expected_output = {
+            'ispatial': "ianalyze.ispatial_*.out"}
+    path_analyze = options.path_optionfiles / "ianalyze.xml"
+    cmd_eanalyze = create_promise_command(
+        "xtp_run -e ianalyze -o {} -f {}", path_analyze, state)
+
+    return call_xtp_cmd(
+        cmd_eanalyze, options.scratch_dir / 'ianalyze', expected_output=expected_output)
 
 
 def run_config_xqmultipole(results: Results, options: Options) -> dict:
@@ -158,7 +166,7 @@ def run_einternal(results: Results, options: Options) -> dict:
 def run_eqm(results: Results, options: Options) -> dict:
     """
     Run the eqm jobs.
-    """ 
+    """
     # set user-defined values
     results['job_opts_eqm'] = edit_calculator_options(
         options, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'])
@@ -240,7 +248,7 @@ def run_kmcmultiple(results: Results, options: Options) -> dict:
 
     args = create_promise_command(
         "xtp_run -e kmcmultiple -o {} -f {}", results['job_opts_kmcmultiple']['kmcmultiple'],
-        options.state_file)
+        options.state)
 
     return call_xtp_cmd(args, options.scratch_dir / "kmcmultiple", expected_output={
         "timedependence": "timedependence.csv",
@@ -253,14 +261,14 @@ def run_kmclifetime(results: Results, options: Options) -> dict:
     Run a kmclifetime job
     """
     # Add dependency to kmcmultiple
-    wait_till_done(results['job_kmcmultiple'])
+    # wait_till_done(results['job_kmcmultiple'])
 
     options.votca_calculators_options["kmclifetime"]["lifetimefile"] = options.lifetimes_file
     results['job_opts_kmclifetime'] = edit_calculator_options(options, ['kmclifetime'])
 
     args = create_promise_command(
         "xtp_run -e kmclifetime -o {} -f {}", results['job_opts_kmclifetime']['kmclifetime'],
-        options.state_file)
+        options.state)
 
     return call_xtp_cmd(args, options.scratch_dir / "kmclifetime", expected_output={
         "lifetimes": "*csv"})
