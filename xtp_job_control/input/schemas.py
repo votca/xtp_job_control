@@ -10,7 +10,7 @@ schema_votca_calculators_options = Schema({
 
     Optional("bsecoupling", default={}): Dict,
 
-    Optional("dftgwbse", default={}): Dict,
+    Optional("dftgwbse", default={"dftpackage": "xtpdft.xml"}): Dict,
 
     Optional("eqm", default={}): Dict,
 
@@ -81,11 +81,11 @@ schema_dftgwbse = Schema({
     "molecule": exists,
 
     # Functional
-    Optional("functional", default="XC_HYB_GGA_XC_PBEH"): str,
+    Optional("functional"): str,
 
     # Basis
-    Optional("dft_basis", default="ubecppol"): str,
-    Optional("gwbasis", default="aux-ubecppol"): str,
+    Optional("dft_basis"): str,
+    Optional("gwbasis"): str,
 
     # path to the VOTCASHARE folder
     "path_votcashare": exists,

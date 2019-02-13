@@ -20,9 +20,6 @@ path_votcashare:
   "tests/test_files/votca"
 
 votca_calculators_options:
-  dftgwbse:
-    dftpackage: xtpdft.xml
-
   esp2multipole:
     openmp: 1
 

@@ -3,16 +3,16 @@ workflow:
 
 mode:
   optimze
-  
+
 dft_basis:
   "ubecppol"
 
 gwbasis:
   "aux-ubecppol"
-  
+
 functional:
   "XC_HYB_GGA_XC_PBEH"
-  
+
 molecule:
   "tests/DFT_GWBSE/dftgwbse_CO_geoopt/CO.xyz"
 
@@ -20,9 +20,6 @@ path_votcashare:
   "tests/test_files/votca"
 
 votca_calculators_options:
-  dftgwbse:
-    dftpackage: xtpdft.xml
-
   mbgft:
     openmp: 4
 
