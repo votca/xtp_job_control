@@ -73,6 +73,10 @@ schema_dftgwbse = Schema({
     "workflow": And(str, Use(str.lower),
                     lambda s: s in ("dftgwbse")),
 
+    # Type of calculation
+    Optional("mode", default="energy"): And(
+        str, Use(str.lower), lambda s: s in ("energy", "optimize")),
+
     # Molecular geometry:
     "molecule": exists,
 

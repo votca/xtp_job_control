@@ -29,7 +29,7 @@ setup(
     install_requires=[
         'noodles[numpy]', 'pyyaml', 'schema'],
     extras_require={
-        'test': ['pytest==4.1.0', 'pytest-cov==2.6.1', 'coverage',
+        'test': ['pytest>=4.1.0', 'pytest-cov>=2.6.1', 'coverage',
                  'codacy-coverage']},
     scripts=[
         'scripts/run_xtp_workflow.py']
