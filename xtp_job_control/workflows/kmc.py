@@ -11,10 +11,10 @@ def kmc_workflow(options: dict) -> object:
     results = Results({})
 
     # Run KMC multiple
-    results['job_kmcmultiple'] = run_kmcmultiple(results, options)
+    results['job_kmcmultiple'] = run_kmcmultiple(results, options, state=options.state)
 
     # Run KMC lifetime
-    results['job_kmclifetime'] = run_kmclifetime(results, options)
+    results['job_kmclifetime'] = run_kmclifetime(results, options, state=options.state)
 
     output = run(results)
     path_output = "results_kmc.yml"

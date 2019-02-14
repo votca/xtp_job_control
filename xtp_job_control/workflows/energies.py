@@ -1,9 +1,8 @@
 from ..results import Results
 from ..runner import run
 from .xtp_workflow import (
-    create_promise_command, edit_system_options, distribute_xqmultipole_jobs,
-    run_eanalyze, run_ianalyze, run_config_xqmultipole,
-    run_dump, run_einternal, run_eqm, run_iqm, run_neighborlist, write_output)
+    create_promise_command, edit_system_options, run_eanalyze, run_ianalyze, run_dump,
+    run_einternal, run_eqm, run_iqm, run_neighborlist, run_xqmultipole, write_output)
 from .workflow_components import call_xtp_cmd
 
 
@@ -35,30 +34,28 @@ def energies_workflow(options: dict) -> object:
     # step dump
     # output MD and QM mappings into extract.trajectory_md.pdb and
     # extract.trajectory_qm.pdb files
-    results['job_dump'] = run_dump(results, options)
+    results['job_dump'] = run_dump(results, options, state=results['job_state']['state'])
 
     # step neighborlist
     # Change options neighborlist
-    results['job_neighborlist'] = run_neighborlist(results, options)
+    results['job_neighborlist'] = run_neighborlist(
+        results, options, state=results['job_state']['state'])
 
     # # step einternal
     # read in reorganization energies stored in system.xml to state.sql
-    results['job_einternal'] = run_einternal(results, options)
-
-    # step config xqmultipole
-    results['job_select_xqmultipole_jobs'] = run_config_xqmultipole(results, options)
+    results['job_einternal'] = run_einternal(results, options, state=results['job_state']['state'])
 
     # Run xqmultipole jobs in parallel
-    results['jobs_xqmultipole'] = distribute_xqmultipole_jobs(results, options)
+    results['jobs_xqmultipole'] = run_xqmultipole(results, options, results['job_state']['state'])
 
     # step eanalyze
     results['job_eanalyze'] = run_eanalyze(results, options, state=results['job_state']['state'])
 
     # step eqm
-    results['jobs_eqm'] = run_eqm(results, options)
+    results['jobs_eqm'] = run_eqm(results, options, results['job_state']['state'])
 
     # step iqm
-    results['jobs_iqm'] = run_iqm(results, options)
+    results['jobs_iqm'] = run_iqm(results, options, results['job_neighborlist']['state'])
 
     # step ianalyze
     results['job_ianalyze'] = run_ianalyze(results, options, state=results['jobs_iqm']['state'])

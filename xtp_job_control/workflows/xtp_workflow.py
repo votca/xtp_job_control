@@ -86,34 +86,6 @@ def run_ianalyze(results: Results, options: Options, state: PromisedObject) -> D
         cmd_eanalyze, options.scratch_dir / 'ianalyze', expected_output=expected_output)
 
 
-def run_config_xqmultipole(results: Results, options: Options) -> dict:
-    """
-    Config the optionfiles to run the xqmultipole jobs
-    """
-    results['job_opts_xqmultipole'] = edit_calculator_options(options, ['jobwriter', 'xqmultipole'])
-
-    # command for jobwriter runner
-    cmd_setup_xqmultipole = create_promise_command(
-        "xtp_run -e jobwriter -o {} -f {} -s 0",
-        results['job_opts_xqmultipole']['jobwriter'], results['job_state']['state'])
-
-    # schedule command
-    results['job_setup_xqmultipole'] = call_xtp_cmd(
-        cmd_setup_xqmultipole, options.scratch_dir / "xqmultipole", expected_output={
-            'mps_tab': 'jobwriter.mps.background.tab',
-            'xqmultipole_jobs': 'jobwriter.mps.monomer.xml'})
-
-    # change path of the MP_FILES
-    mp_files = to_posix(options.mp_files.absolute())
-    results['job_setup_xqmultipole']['mps_tab'] = rename_map_file(
-        results['job_setup_xqmultipole']['mps_tab'], "MP_FILES", mp_files)
-
-    # Run only the jobs specified by the user
-    return edit_jobs_file(
-        results['job_setup_xqmultipole']['xqmultipole_jobs'],
-        options.xqmultipole_jobs)
-
-
 def run_dftgwbse(results: Results, options: Options) -> dict:
     """
     Running dft + gwbse, output can be found in dftgwbse.log
@@ -139,31 +111,31 @@ def run_dftgwbse(results: Results, options: Options) -> dict:
         cmd_dftgwbse, options.scratch_dir / "dft_gwbse", expected_output={})
 
 
-def run_dump(results: Results, options: Options) -> dict:
+def run_dump(results: Results, options: Options, state: PromisedObject) -> dict:
     """
     output MD and QM mappings into extract.trajectory_md.pdb and extract.trajectory_qm.pdb files
     """
     cmd_dump = create_promise_command(
-        "xtp_dump -e trajectory2pdb -f {}", results['job_state']['state'])
+        "xtp_dump -e trajectory2pdb -f {}", state)
 
     return call_xtp_cmd(cmd_dump, options.scratch_dir / "dump", expected_output={
         'md_trajectory': 'extract.trajectory_md.pdb',
         'qm_trajectory': 'extract.trajectory_qm.pdb'})
 
 
-def run_einternal(results: Results, options: Options) -> dict:
+def run_einternal(results: Results, options: Options, state: PromisedObject) -> dict:
     """
     read in reorganisation energies stored in system.xml to state.sql
     """
     einternal_file = options.path_optionfiles / 'einternal.xml'
     cmd_einternal = create_promise_command(
-        "xtp_run -e einternal -o {} -f {}", einternal_file, results['job_state']['state'])
+        "xtp_run -e einternal -o {} -f {}", einternal_file, state)
     return call_xtp_cmd(
         cmd_einternal, options.scratch_dir,
         expected_output={'einternal': einternal_file})
 
 
-def run_eqm(results: Results, options: Options) -> dict:
+def run_eqm(results: Results, options: Options, state) -> dict:
     """
     Run the eqm jobs.
     """
@@ -173,7 +145,7 @@ def run_eqm(results: Results, options: Options) -> dict:
 
     cmd_eqm_write = create_promise_command(
         "xtp_parallel -e eqm -o {} -f {} -s 0 -j write", results['job_opts_eqm']['eqm'],
-        results['job_state']['state'])
+        state)
     results['job_setup_eqm'] = call_xtp_cmd(
         cmd_eqm_write, options.scratch_dir,
         expected_output={"eqm_jobs": "eqm.jobs"})
@@ -198,7 +170,7 @@ def run_gencube(results: Results, options: Options) -> dict:
     return call_xtp_cmd(args, options.scratch_dir / 'gencube', expected_output={})
 
 
-def run_iqm(results: Results, options: Options) -> dict:
+def run_iqm(results: Results, options: Options, state: PromisedObject) -> dict:
     """
     Run the eqm jobs.
     """
@@ -223,8 +195,7 @@ def run_iqm(results: Results, options: Options) -> dict:
     # write into state
     cmd_iqm_write = create_promise_command(
         "xtp_parallel -e iqm -o {} -f {} -s 0 -j write", edited_iqm_file,
-        results['job_neighborlist']['state']
-    )
+        state)
 
     results['job_setup_iqm'] = call_xtp_cmd(
         cmd_iqm_write, options.scratch_dir / 'iqm', expected_output={
@@ -239,7 +210,7 @@ def run_iqm(results: Results, options: Options) -> dict:
     return distribute_iqm_jobs(results, options)
 
 
-def run_kmcmultiple(results: Results, options: Options) -> dict:
+def run_kmcmultiple(results: Results, options: Options, state) -> dict:
     """
     Run a kmcmultiple job
     """
@@ -248,7 +219,7 @@ def run_kmcmultiple(results: Results, options: Options) -> dict:
 
     args = create_promise_command(
         "xtp_run -e kmcmultiple -o {} -f {}", results['job_opts_kmcmultiple']['kmcmultiple'],
-        options.state)
+        state)
 
     return call_xtp_cmd(args, options.scratch_dir / "kmcmultiple", expected_output={
         "timedependence": "timedependence.csv",
@@ -256,7 +227,7 @@ def run_kmcmultiple(results: Results, options: Options) -> dict:
     })
 
 
-def run_kmclifetime(results: Results, options: Options) -> dict:
+def run_kmclifetime(results: Results, options: Options, state) -> dict:
     """
     Run a kmclifetime job
     """
@@ -268,13 +239,13 @@ def run_kmclifetime(results: Results, options: Options) -> dict:
 
     args = create_promise_command(
         "xtp_run -e kmclifetime -o {} -f {}", results['job_opts_kmclifetime']['kmclifetime'],
-        options.state)
+        state)
 
     return call_xtp_cmd(args, options.scratch_dir / "kmclifetime", expected_output={
         "lifetimes": "*csv"})
 
 
-def run_neighborlist(results: Results, options: Options) -> dict:
+def run_neighborlist(results: Results, options: Options, state: PromisedObject) -> dict:
     """
     run neighborlist calculator
     """
@@ -283,7 +254,7 @@ def run_neighborlist(results: Results, options: Options) -> dict:
     cmd_neighborlist = create_promise_command(
         "xtp_run -e neighborlist -o {} -f {}",
         results['job_opts_neighborlist']['neighborlist'],
-        results['job_state']['state'])
+        state)
 
     return call_xtp_cmd(
         cmd_neighborlist, options.scratch_dir, expected_output={
@@ -312,6 +283,37 @@ def run_qmmm(results: Results, options: Options) -> dict:
     # results['job_opts_qmmm'] = edit_calculator_options(
     #     results, ['qmmm'])
     pass
+
+
+def run_xqmultipole(results: Results, options: Options, state: PromisedObject) -> dict:
+    """
+    Config the optionfiles to run the xqmultipole jobs then run the xqmultipole job
+    """
+    results['job_opts_xqmultipole'] = edit_calculator_options(
+        options, ['jobwriter', 'xqmultipole'])
+
+    # command for jobwriter runner
+    cmd_setup_xqmultipole = create_promise_command(
+        "xtp_run -e jobwriter -o {} -f {} -s 0",
+        results['job_opts_xqmultipole']['jobwriter'], state)
+
+    # schedule command
+    results['job_setup_xqmultipole'] = call_xtp_cmd(
+        cmd_setup_xqmultipole, options.scratch_dir / "xqmultipole", expected_output={
+            'mps_tab': 'jobwriter.mps.background.tab',
+            'xqmultipole_jobs': 'jobwriter.mps.monomer.xml'})
+
+    # change path of the MP_FILES
+    mp_files = to_posix(options.mp_files.absolute())
+    results['job_setup_xqmultipole']['mps_tab'] = rename_map_file(
+        results['job_setup_xqmultipole']['mps_tab'], "MP_FILES", mp_files)
+
+    # Run only the jobs specified by the user
+    results['job_select_xqmultipole_jobs'] = edit_jobs_file(
+        results['job_setup_xqmultipole']['xqmultipole_jobs'],
+        options.xqmultipole_jobs)
+
+    return distribute_xqmultipole_jobs(results, options)
 
 
 def distribute_job(dict_input: dict, split_function: Callable) -> dict:
