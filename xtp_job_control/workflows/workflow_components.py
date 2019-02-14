@@ -9,6 +9,7 @@ from pathlib import Path
 from subprocess import (PIPE, Popen)
 from typing import (Callable, Dict, List)
 import logging
+import os
 import re
 import shutil
 
@@ -196,6 +197,9 @@ def split_iqm_calculations(input_dict: dict) -> dict:
                 'job_file': config['job'].name,
             }
         }
+        # Make a symbolic link to the or_files
+        os.symlink(input_dict['scratch_dir'] / "OR_FILES", workdir / "OR_FILES")
+
         edited_files = edit_xml_options(options, workdir)
         results[idx]['iqm'] = edited_files['iqm']
 
@@ -271,3 +275,23 @@ def rename_map_file(path_file: Path, expression: str, new_val: str):
         f.write(re.sub(regex, new_val, xs))
 
     return path_file
+
+
+@schedule
+def move_results_to_workdir(jobs: dict, name: str,  dst: Path) -> dict:
+    """
+    Move all the resulting or_files to the same central location
+    """
+    os.makedirs(dst, exist_ok=True)
+
+    def collect_new_files(val):
+        new_files = []
+        for path in (Path(x) for x in val[name]):
+            shutil.copy(path.as_posix(), dst.as_posix())
+            new_files.append(dst / path.name)
+
+    for k, val in jobs.items():
+        if isinstance(val, dict):
+            jobs[k][name] = collect_new_files(val)
+
+    return jobs

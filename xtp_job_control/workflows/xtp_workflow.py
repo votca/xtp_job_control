@@ -1,8 +1,9 @@
 from ..results import (Options, Results)
 from .workflow_components import (
     call_xtp_cmd, create_promise_command,
-    edit_jobs_file, edit_options, rename_map_file, run_parallel_jobs,
-    split_eqm_calculations, split_iqm_calculations, split_xqmultipole_calculations)
+    edit_jobs_file, edit_options, move_results_to_workdir,
+    rename_map_file, run_parallel_jobs, split_eqm_calculations, split_iqm_calculations,
+    split_qmmm_calculations, split_xqmultipole_calculations)
 from ..xml_editor import edit_xml_file
 from distutils.dir_util import copy_tree
 from pathlib import Path
@@ -135,7 +136,7 @@ def run_einternal(results: Results, options: Options, state: PromisedObject) -> 
         expected_output={'einternal': einternal_file})
 
 
-def run_eqm(results: Results, options: Options, state) -> dict:
+def run_eqm(results: Results, options: Options, state: PromisedObject) -> dict:
     """
     Run the eqm jobs.
     """
@@ -155,7 +156,11 @@ def run_eqm(results: Results, options: Options, state) -> dict:
         results['job_setup_eqm']['eqm_jobs'],
         options.eqm_jobs)
 
-    return distribute_eqm_jobs(results, options)
+    jobs_eqm = distribute_eqm_jobs(results, options, state)
+
+    # Finally move all the OR_FILES to the same folder in the scratch_dir
+    return move_results_to_workdir(
+        jobs_eqm, 'or_files', options.scratch_dir / "OR_FILES/molecules/frame_0")
 
 
 def run_gencube(results: Results, options: Options) -> dict:
@@ -207,7 +212,7 @@ def run_iqm(results: Results, options: Options, state: PromisedObject) -> dict:
         results['job_setup_iqm']['iqm_jobs'],
         options.iqm_jobs)
 
-    return distribute_iqm_jobs(results, options)
+    return distribute_iqm_jobs(results, options, state)
 
 
 def run_kmcmultiple(results: Results, options: Options, state) -> dict:
@@ -276,13 +281,20 @@ def run_partialcharges(results: Results, options: Options) -> dict:
     return call_xtp_cmd(args, options.scratch_dir / 'partialcharges', expected_output={})
 
 
-def run_qmmm(results: Results, options: Options) -> dict:
+def run_qmmm(results: Results, options: Options, state: PromisedObject) -> dict:
     """
     QM/MM calculation
     """
-    # results['job_opts_qmmm'] = edit_calculator_options(
-    #     results, ['qmmm'])
-    pass
+    # Copy option files
+    src = ["mbgft.xml", "xtpdft.xml"]
+    dst = ["mbgft_qmmm.xml", "xtpdft_qmmm.xml"]
+    copy_option_files(options.path_optionfiles, src, dst)
+
+    # Edit options files
+    results['job_opts_qmmm'] = edit_calculator_options(
+        options, ['qmmm', 'mbgft_qmmm', 'xtpdft_qmmm'])
+
+    return distribute_qmmm_jobs(results, options, state)
 
 
 def run_xqmultipole(results: Results, options: Options, state: PromisedObject) -> dict:
@@ -313,7 +325,7 @@ def run_xqmultipole(results: Results, options: Options, state: PromisedObject) -
         results['job_setup_xqmultipole']['xqmultipole_jobs'],
         options.xqmultipole_jobs)
 
-    return distribute_xqmultipole_jobs(results, options)
+    return distribute_xqmultipole_jobs(results, options, state)
 
 
 def distribute_job(dict_input: dict, split_function: Callable) -> dict:
@@ -325,7 +337,7 @@ def distribute_job(dict_input: dict, split_function: Callable) -> dict:
     return run_parallel_jobs(dict_jobs, lift(dict_input))
 
 
-def distribute_xqmultipole_jobs(results: Results, options: Options) -> dict:
+def distribute_xqmultipole_jobs(results: Results, options: Options, state: PromisedObject) -> dict:
     """
     Run the xqmultipole_jobs independently
     """
@@ -336,7 +348,7 @@ def distribute_xqmultipole_jobs(results: Results, options: Options) -> dict:
         'xqmultipole_jobs': results['job_setup_xqmultipole']['xqmultipole_jobs'],
         'xqmultipole': results['job_opts_xqmultipole']['xqmultipole'],
         'system': results['job_system']['system'],
-        'state': results['job_state']['state'],
+        'state': state,
         'mps_tab': results['job_setup_xqmultipole']['mps_tab'],
         'cmd_options': "-s 0 -t 1 -c 1000 -j run > xqmultipole.log",
         'expected_output': {'tab': 'job.tab'}
@@ -345,7 +357,7 @@ def distribute_xqmultipole_jobs(results: Results, options: Options) -> dict:
     return distribute_job(dict_input, split_xqmultipole_calculations)
 
 
-def distribute_eqm_jobs(results: Results, options: Options) -> dict:
+def distribute_eqm_jobs(results: Results, options: Options, state: PromisedObject) -> dict:
     """
     Run the eqm job in separated folders
     """
@@ -353,17 +365,17 @@ def distribute_eqm_jobs(results: Results, options: Options) -> dict:
         'name': 'eqm',
         'scratch_dir': options.scratch_dir,
         'eqm_jobs': results['job_setup_eqm']['eqm_jobs'],
-        'state': results['job_state']['state'],
+        'state': state,
         'eqm': results['job_opts_eqm']['eqm'],
         'path_optionfiles': options.path_optionfiles,
         'cmd_options': "-s 0 -j run -c 1 -t 1",
         'expected_output': {
-            'tab': 'job.tab', 'orb': 'system.orb'}
+            'tab': 'job.tab', 'or_files': 'OR_FILES/molecules/frame_0/*.orb'}
     }
     return distribute_job(dict_input, split_eqm_calculations)
 
 
-def distribute_iqm_jobs(results: Results, options: Options) -> dict:
+def distribute_iqm_jobs(results: Results, options: Options, state: PromisedObject) -> dict:
     """
     Run the iqm jobs independently
     """
@@ -371,8 +383,9 @@ def distribute_iqm_jobs(results: Results, options: Options) -> dict:
         'name': 'iqm',
         'scratch_dir': options.scratch_dir,
         'iqm_jobs': results['job_setup_iqm']['iqm_jobs'],
-        'state': results['job_neighborlist']['state'],
+        'state': state,
         'iqm': results['job_opts_iqm']['iqm'],
+        'jobs_eqm': results['jobs_eqm'],
         'path_optionfiles': options.path_optionfiles,
         'cmd_options': "-s 0 -j run -c 1 -t 1",
         'expected_output': {
@@ -385,6 +398,22 @@ def distribute_iqm_jobs(results: Results, options: Options) -> dict:
     dict_read['expected_output'] = None
 
     return distribute_job(dict_input, split_iqm_calculations)
+
+
+def distribute_qmmm_jobs(results: Results, options: Options, state: PromisedObject) -> dict:
+    """
+    """
+    dict_input = {
+        'name': 'qmmm',
+        'scratch_dir': options.scratch_dir,
+        'qmmm_jobs': results['job_setup_qmmm']['qmmm_jobs'],
+        'state': state,
+        'qmmm': results['job_opts_qmmm']['qmmm'],
+        'path_optionfiles': options.path_optionfiles,
+        'cmd_options': ""
+    }
+    
+    return distribute_job(dict_input, split_qmmm_calculations)
 
 
 def write_output(output: dict, options: Options, file_name: str = "results.yml") -> None:

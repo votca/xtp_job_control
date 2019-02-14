@@ -55,7 +55,7 @@ def energies_workflow(options: dict) -> object:
     results['jobs_eqm'] = run_eqm(results, options, results['job_state']['state'])
 
     # step iqm
-    results['jobs_iqm'] = run_iqm(results, options, results['job_neighborlist']['state'])
+    results['jobs_iqm'] = run_iqm(results, options, state=results['jobs_eqm']['state'])
 
     # step ianalyze
     results['job_ianalyze'] = run_ianalyze(results, options, state=results['jobs_iqm']['state'])
