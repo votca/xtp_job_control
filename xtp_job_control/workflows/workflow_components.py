@@ -35,8 +35,8 @@ def run_command(cmd: str, workdir: str, expected_output: dict = None):
         rs = p.communicate()
 
     logger.info("RUNNING COMMAND: {}".format(cmd))
-    logger.info("COMMAND OUTPUT: {}".format(rs[0]))
-    logger.error("COMMAND ERROR: {}".format(rs[1]))
+    logger.info("COMMAND OUTPUT: {}".format(rs[0].decode()))
+    logger.error("COMMAND ERROR: {}".format(rs[1].decode()))
 
     if expected_output is None:
         return None
@@ -200,6 +200,12 @@ def split_iqm_calculations(input_dict: dict) -> dict:
         results[idx]['iqm'] = edited_files['iqm']
 
     return {k: v for k, v in results.items()}
+
+
+@schedule
+def split_qmmm_calculations(input_dict: dict) -> dict:
+    """ """
+    pass
 
 
 def split_calculations(input_dict: dict, jobs_name: str) -> dict:
