@@ -128,6 +128,10 @@ def run_parallel_jobs(dict_jobs: dict, dict_input: dict) -> dict:
         output = run_command(
             cmd_parallel + cmd_options, job_info['workdir'],
             expected_output=dict_input['expected_output'])
+
+        # Also store the path to the workdir
+        results[key]['job_workdir'] = job_info['workdir']
+
         for k, val in output.items():
             results[key][k] = val
 
@@ -278,20 +282,25 @@ def rename_map_file(path_file: Path, expression: str, new_val: str):
 
 
 @schedule
-def move_results_to_workdir(jobs: dict, name: str,  dst: Path) -> dict:
+def move_results_to_workdir(jobs: dict, names: list,  workdir: Path) -> dict:
     """
     Move all the resulting or_files to the same central location
     """
-    os.makedirs(dst, exist_ok=True)
-
-    def collect_new_files(val):
+    def collect_new_files(job, name):
         new_files = []
-        for path in (Path(x) for x in val[name]):
-            shutil.copy(path.as_posix(), dst.as_posix())
+        for path in (Path(x) for x in job[name]):
+            relative = path.relative_to(job['job_workdir'])
+            folder_dest = workdir / relative.parent
+            os.makedirs(folder_dest.as_posix(), exist_ok=True)
+            dst = folder_dest / path.name
+            shutil.move(path.as_posix(), dst.as_posix())
             new_files.append(dst / path.name)
 
-    for k, val in jobs.items():
-        if isinstance(val, dict):
-            jobs[k][name] = collect_new_files(val)
+        return new_files
+
+    for k, job in jobs.items():
+        for name in names:
+            if isinstance(job, dict):
+                jobs[k][name] = collect_new_files(job, name)
 
     return jobs

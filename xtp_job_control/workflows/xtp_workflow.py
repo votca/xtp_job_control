@@ -159,8 +159,9 @@ def run_eqm(results: Results, options: Options, state: PromisedObject) -> dict:
     jobs_eqm = distribute_eqm_jobs(results, options, state)
 
     # Finally move all the OR_FILES to the same folder in the scratch_dir
-    return move_results_to_workdir(
-        jobs_eqm, 'or_files', options.scratch_dir / "OR_FILES/molecules/frame_0")
+    names = ('molecule_orb', 'dft_orb', 'mps_file')
+
+    return move_results_to_workdir(jobs_eqm, names, options.scratch_dir)
 
 
 def run_gencube(results: Results, options: Options) -> dict:
@@ -370,7 +371,10 @@ def distribute_eqm_jobs(results: Results, options: Options, state: PromisedObjec
         'path_optionfiles': options.path_optionfiles,
         'cmd_options': "-s 0 -j run -c 1 -t 1",
         'expected_output': {
-            'tab': 'job.tab', 'or_files': 'OR_FILES/molecules/frame_0/*.orb'}
+            'tab': 'job.tab',
+            'dft_orb': "OR_FILES/xtp_eqm/frame_0/molecule_*/*.orb",
+            'molecule_orb': 'OR_FILES/molecules/frame_0/*.orb',
+            'mps_file': 'MP_FILES/frame_0/*/*.mps'}
     }
     return distribute_job(dict_input, split_eqm_calculations)
 
