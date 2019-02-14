@@ -53,7 +53,7 @@ def test_initial_config_energies():
     Check that the files are copy to a temporal workdir
     """
     tmp_path = tempfile.gettempdir()
-    test_file = "tests/Methane/input_methane.yml"
+    test_file = "tests/Methane/input_energies.yml"
     input_dict = recursively_create_path(validate_input(test_file))
     input_dict['workdir'] = tmp_path
 
