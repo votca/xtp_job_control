@@ -21,3 +21,4 @@ def dftgwbse_workflow(options: dict) -> object:
     output = run(results)
     name_output = "results_dftgwbse"
     write_output(output, options, name_output)
+    print("DFT GWBSE finished, check results: ", name_output)

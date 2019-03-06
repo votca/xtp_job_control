@@ -2,7 +2,7 @@ workflow:
   dftgwbse
 
 mode:
-  optimze
+  optimize
 
 dftbasis:
   "ubecppol"
@@ -20,6 +20,13 @@ path_votcashare:
   "tests/test_files/votca"
 
 votca_calculators_options:
+  dftgwbse:
+    dftpackage:
+      xtpdft.xml
+    gwbse_engine:
+      dftlog:
+        system_dft.orb
+
   mbgft:
     openmp: 4
 
