@@ -1,4 +1,4 @@
-__all__ = ["schema_energies", "schema_kmc"]
+__all__ = ["schema_dftgwbse", "schema_kmc", "schema_transport"]
 
 from os.path import exists
 from schema import (And, Optional, Schema, Use)
@@ -98,11 +98,11 @@ schema_dftgwbse = Schema({
 })
 
 
-schema_energies = Schema({
+schema_transport = Schema({
 
     # Name of the workflow to run
     "workflow": And(str, Use(str.lower),
-                    lambda s: s in ("energies")),
+                    lambda s: s in ("transport")),
 
     # path to the VOTCASHARE folder
     "path_votcashare": exists,

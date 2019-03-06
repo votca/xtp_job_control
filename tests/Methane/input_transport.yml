@@ -1,5 +1,5 @@
 workflow:
-  energies
+  transport
 
 system:
   "tests/Methane/system.xml"

@@ -12,7 +12,7 @@ Welcome to xtp_job_control's documentation!
 
    xtp_job_control
    tutorial
-
+   runner
 
 Indices and tables
 ==================

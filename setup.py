@@ -9,8 +9,8 @@ def readme():
 
 setup(
     name='xtp_job_control',
-    version='0.1.0',
-    description='',
+    version='0.2.0',
+    description='Workflow engine to use the VOTCA-XTP library',
     license='Apache-2.0',
     url='https://github.com/votca/xtp_job_control',
     author=['Felipe Zapata'],

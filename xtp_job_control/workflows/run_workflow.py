@@ -1,12 +1,12 @@
 from ..input import validate_input
 from ..results import Options
 from .xtp_workflow import (initial_config, recursively_create_path)
-from .energies import energies_workflow
+from .transport import transport_workflow
 from .kmc import kmc_workflow
 from .dftgwbse import dftgwbse_workflow
 
 available_workflows = {
-    'kmc': kmc_workflow, 'energies': energies_workflow, 'dftgwbse': dftgwbse_workflow}
+    'kmc': kmc_workflow, 'transport': transport_workflow, 'dftgwbse': dftgwbse_workflow}
 
 
 def run_workflow(options: dict):

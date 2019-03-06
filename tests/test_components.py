@@ -48,12 +48,12 @@ def test_posix():
 
 
 @pytest.mark.skipif(sys.version_info.minor < 6, reason="python 3.6 or higher required")
-def test_initial_config_energies():
+def test_initial_config_transport():
     """
     Check that the files are copy to a temporal workdir
     """
     tmp_path = tempfile.gettempdir()
-    test_file = "tests/Methane/input_energies.yml"
+    test_file = "tests/Methane/input_transport.yml"
     input_dict = recursively_create_path(validate_input(test_file))
     input_dict['workdir'] = tmp_path
 

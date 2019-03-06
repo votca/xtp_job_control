@@ -6,7 +6,7 @@ from .xtp_workflow import (
 from .workflow_components import call_xtp_cmd
 
 
-def energies_workflow(options: dict) -> object:
+def transport_workflow(options: dict) -> object:
     """
     Use the `options` to create a workflow to compute energies
     """
