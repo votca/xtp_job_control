@@ -17,7 +17,7 @@ def kmc_workflow(options: dict) -> object:
     results['job_kmclifetime'] = run_kmclifetime(results, options, state=options.state)
 
     output = run(results)
-    path_output = "results_kmc.yml"
-    write_output(output, options, path_output)
+    name_output = "results_kmc"
+    write_output(output, options, name_output)
 
-    print("check output file: ", path_output)
+    print("check output file: ", name_output)

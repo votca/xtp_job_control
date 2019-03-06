@@ -64,7 +64,7 @@ def energies_workflow(options: dict) -> object:
     # results['job_qmmm'] = 
     # RUN the workflow
     output = run(results)
-    path_output = "results_energies.yml"
-    write_output(output, options, path_output)
+    name_output = "results_energies"
+    write_output(output, options, name_output)
 
-    print("check output file: ", path_output)
+    print("check output file: ", name_output)

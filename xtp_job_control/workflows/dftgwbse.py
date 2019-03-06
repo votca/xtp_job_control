@@ -19,5 +19,5 @@ def dftgwbse_workflow(options: dict) -> object:
         results, options, promise=results["dftgwbse"]["system"])
 
     output = run(results)
-    path_output = "results_dftgwbse.yml"
-    write_output(output, options, path_output)
+    name_output = "results_dftgwbse"
+    write_output(output, options, name_output)

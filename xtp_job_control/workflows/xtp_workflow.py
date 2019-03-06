@@ -423,16 +423,17 @@ def distribute_qmmm_jobs(results: Results, options: Options, state: PromisedObje
         'path_optionfiles': options.path_optionfiles,
         'cmd_options': ""
     }
-    
+
     return distribute_job(dict_input, split_qmmm_calculations)
 
 
-def write_output(output: dict, options: Options, file_name: str = "results.yml") -> None:
+def write_output(output: dict, options: Options, file_name: str = "results") -> None:
     """
     Write the `output` dictionary in YAML format.
     """
     # Transform the options to a plain dictionary
     output['options'] = dict(options)
+    file_name += "_" + output['options']['scratch_dir'].name + ".yml"
     with open(file_name, 'w') as f:
         yaml.dump(to_posix(output), f, default_flow_style=False)
 
@@ -465,7 +466,7 @@ def initial_config(options: Options) -> Dict:
     setup to call xtp tools.
     """
     config_logger(options['workdir'])
-    ts = datetime.datetime.now().timestamp()
+    ts = datetime.datetime.now().isoformat()
     scratch_dir = tempfile.gettempdir() / Path('xtp_' + str(ts))
     scratch_dir.mkdir()
 
