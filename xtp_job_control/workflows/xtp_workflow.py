@@ -109,7 +109,9 @@ def run_dftgwbse(results: Results, options: Options) -> dict:
         "xtp_tools -e dftgwbse -o {} > dftgwbse.log", opts['dftgwbse'])
 
     return call_xtp_cmd(
-        cmd_dftgwbse, options.scratch_dir / "dft_gwbse", expected_output={})
+        cmd_dftgwbse, options.scratch_dir / "dft_gwbse", expected_output={
+            "log": "dftgwbse.log", "out": "dftgwbse.out.xml",
+            "system_dft": "system_dft.orb", "system": "system.orb"})
 
 
 def run_dump(results: Results, options: Options, state: PromisedObject) -> dict:
@@ -268,14 +270,19 @@ def run_neighborlist(results: Results, options: Options, state: PromisedObject) 
             'state': 'state.sql'})
 
 
-def run_partialcharges(results: Results, options: Options) -> dict:
+def run_partialcharges(results: Results, options: Options, promise: PromisedObject = None) -> dict:
     """
     Compute partial charges
     """
     opts = edit_calculator_options(options, ['esp2multipole', 'partialcharges'])
 
-    logger.info("Running CHELPG fit")
+    if promise is not None:
+        path_partialcharges = options.path_optionfiles / "partialcharges.xml"
+        sections_to_edit = {"partialcharges": {"input": promise}}
+        opts['partialcharges'] = schedule(edit_xml_file)(
+             path_partialcharges, 'options', lift(sections_to_edit))
 
+    logger.info("Running CHELPG fit")
     args = create_promise_command(
         "xtp_tools -e partialcharges -o {}", opts['partialcharges'])
 
