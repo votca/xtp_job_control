@@ -46,3 +46,6 @@ coverage.xml
 
 # xtp
 *.sql
+
+# docs build
+docs/_build

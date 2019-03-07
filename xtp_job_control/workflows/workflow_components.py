@@ -18,9 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 @schedule
-def call_xtp_cmd(cmd: str, workdir: str, expected_output: dict = None):
+def call_xtp_cmd(
+        cmd: str, workdir: str, expected_output: dict = None):
     """
-    Run a bash `cmd` in the `cwd` folder and search for a list of `expected_output`
+    Run a bash `cmd` in the `workdir` folder and search for a list of `expected_output`
     files.
     """
     if not workdir.exists():
@@ -93,7 +94,8 @@ def edit_path_options(path_xml: str, path_optionfiles: Path) -> str:
 
 
 @schedule
-def create_promise_command(string: str, *args) -> str:
+def create_promise_command(
+        string: str, *args) -> str:
     """Use a `string` as template command and fill in the options using
     possible promised `args`
     """
