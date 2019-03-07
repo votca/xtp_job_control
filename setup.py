@@ -14,7 +14,7 @@ setup(
     license='Apache-2.0',
     url='https://github.com/votca/xtp_job_control',
     author=['Felipe Zapata'],
-    author_email='fzapata_esciencecenter.nl',
+    author_email='fzapata@esciencecenter.nl',
     keywords='chemistry materials',
     long_description=readme(),
     packages=find_packages(),

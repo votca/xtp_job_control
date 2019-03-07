@@ -54,7 +54,7 @@ A workflow is run by executing the following command in the terminal:
 
 ``run_xtp_workflow.py --input tests/DFT_GWBSE/dftgwbse_CH4/input_dft_gwbse_CH4.yml``
 
-Where **run_xtp_workflow.py** is the python script that read, process and run the workflow, and the input is a file
+Where **run_xtp_workflow.py** is the python script that read, process and run the workflow; and the input is a file
 in yaml_ format. 
 
 .. _yaml: https://pyyaml.org/wiki/PyYAMLDocumentation
