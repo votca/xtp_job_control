@@ -4,7 +4,7 @@
 
 ### New
  * The [documentation](https://xtp-job-control.readthedocs.io/en/latest/index.html) is now avaialable online.
- * There are new [predifined workflows](https://xtp-job-control.readthedocs.io/en/latest/tutorial.html#available-workflows)
+ * There are new [predefined workflows](https://xtp-job-control.readthedocs.io/en/latest/tutorial.html#available-workflows)
 
 #  0.0.1
 ### Notes
