@@ -73,8 +73,8 @@ schema_kmc = Schema({
 schema_dftgwbse = Schema({
 
     # Name of the workflow to run
-    "workflow": And(str, Use(str.lower),
-                    lambda s: s in ("dftgwbse")),
+    "workflow": And(
+        str, Use(str.lower), lambda s: s in ("dftgwbse")),
 
     # Type of calculation
     Optional("mode", default="energy"): And(

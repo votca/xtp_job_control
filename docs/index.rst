@@ -10,9 +10,10 @@ Welcome to xtp_job_control's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   xtp_job_control
+   installation
    tutorial
-   runner
+   xtp_workflow
+   create
 
 Indices and tables
 ==================
