@@ -3,7 +3,7 @@ Installation
 
 To install the *xtp_job_control* library type the following command:
 
-``pip install pip install git+https://github.com/votca/xtp_job_control@master``
+``pip install git+https://github.com/votca/xtp_job_control@master``
 
 
 Requirements

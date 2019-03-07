@@ -3,7 +3,7 @@ Creating Your Own Workflow
 ==========================
 if the available workflows do not provided simulation that you want to perform,
 you can create your own worklow by glueing together the available functions
-at the `xtp_workflow`_
+at the `xtp_workflow`_.
 
 If non of the functions at the `xtp_workflow`_ modules satifies your needs, you
 can create your own function using the :func:`xtp_job_control.workflows.workflow_components.call_xtp_cmd`

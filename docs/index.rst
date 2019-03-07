@@ -14,6 +14,7 @@ Welcome to xtp_job_control's documentation!
    tutorial
    xtp_workflow
    create
+   xml
 
 Indices and tables
 ==================
