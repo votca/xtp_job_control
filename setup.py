@@ -9,7 +9,7 @@ def readme():
 
 setup(
     name='xtp_job_control',
-    version='0.1.0',
+    version='0.1.1',
     description='Workflow engine to use the VOTCA-XTP library',
     license='Apache-2.0',
     url='https://github.com/votca/xtp_job_control',
@@ -17,6 +17,7 @@ setup(
     author_email='fzapata@esciencecenter.nl',
     keywords='chemistry materials',
     long_description=readme(),
+    long_description_content_type='text/markdown',
     packages=find_packages(),
     classifiers=[
         'License :: OSI Approved :: Apache Software License',
@@ -26,7 +27,7 @@ setup(
         'Topic :: Scientific/Engineering :: Chemistry'
     ],
     install_requires=[
-        'noodles[numpy]', 'pyyaml', 'schema'],
+        'noodles[numpy]', 'pyyaml==5.1', 'schema'],
     extras_require={
         'test': ['pytest>=4.1.0', 'pytest-cov>=2.6.1', 'coverage',
                  'codacy-coverage']},

@@ -15,7 +15,7 @@ def validate_input(input_file: str) -> Dict:
     of `workflow` and return a nested dictionary with the input.
     """
     with open(input_file, 'r') as f:
-        dict_input = yaml.load(f.read())
+        dict_input = yaml.load(f, Loader=yaml.FullLoader)
 
     try:
         schema = schema_simulations[dict_input['workflow']]

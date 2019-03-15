@@ -67,7 +67,7 @@ How it works
 ************
 First, the library scan the input and checks its validity (using a set of predifined schemas_), then a `dependency graph_` is
 built between the different jobs involved in the workflow. This graph allows to run in parallel those jobs that do not
-dependent on each other, while creating explicit dependencies between jobs that need to run in a sequential mode, injecting
+dependent on each other, while creating explicit /dependencies between jobs that need to run in a sequential mode, injecting
 the ouput of one job as input of the next one. Finally, the jobs are running in different folders while the dependecies between
 them are automatically track. 
 
@@ -82,6 +82,7 @@ but will query the database for already existing results and execute only the ta
 
 .. _schemas: https://github.com/votca/xtp_job_control/blob/master/xtp_job_control/input/schemas.py
 .. _Noodles: http://nlesc.github.io/noodles/
+.. _dependency graph: https://en.wikipedia.org/wiki/Dependency_graph
 
 
 Votca calculators options
