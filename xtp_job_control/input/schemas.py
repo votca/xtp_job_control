@@ -2,54 +2,53 @@ __all__ = ["schema_dftgwbse", "schema_kmc", "schema_transport"]
 
 from os.path import exists
 from schema import (And, Optional, Schema, Use)
-from typing import (Dict, List)
 
 
 # "options to change from default templates
 schema_votca_calculators_options = Schema({
 
-    Optional("bsecoupling", default={}): Dict,
+    Optional("bsecoupling", default={}): dict,
 
-    Optional("dftgwbse", default={"dftpackage": "xtpdft.xml"}): Dict,
+    Optional("dftgwbse", default={"dftpackage": "xtpdft.xml"}): dict,
 
     Optional(
         "eqm", default={
             "gwbse_options": "mbgft.xml", "dftpackage": "xtpdft.xml",
-            "esp_options": "esp2multipole.xml"}): Dict,
+            "esp_options": "esp2multipole.xml"}): dict,
 
-    Optional("esp2multipole", default={}): Dict,
+    Optional("esp2multipole", default={}): dict,
 
-    Optional("gen_cube", default={}): Dict,
+    Optional("gen_cube", default={}): dict,
 
-    Optional("iqm", default={}): Dict,
+    Optional("iqm", default={}): dict,
 
-    Optional("jobwriter", default={}): Dict,
+    Optional("jobwriter", default={}): dict,
 
-    Optional("jobwriter_qmmm", default={}): Dict,
+    Optional("jobwriter_qmmm", default={}): dict,
 
-    Optional("kmclifetime", default={}): Dict,
+    Optional("kmclifetime", default={}): dict,
 
-    Optional("kmcmultiple", default={}): Dict,
+    Optional("kmcmultiple", default={}): dict,
 
-    Optional("mbgft", default={}): Dict,
+    Optional("mbgft", default={}): dict,
 
-    Optional("mbgft_pair", default={}): Dict,
+    Optional("mbgft_pair", default={}): dict,
 
-    Optional("mbgft_qmmm", default={}): Dict,
+    Optional("mbgft_qmmm", default={}): dict,
 
-    Optional("neighborlist", default={}): Dict,
+    Optional("neighborlist", default={}): dict,
 
-    Optional("partialcharges", default={}): Dict,
+    Optional("partialcharges", default={}): dict,
 
-    Optional("qmmm", default={}): Dict,
+    Optional("qmmm", default={}): dict,
 
-    Optional("xqmultipole", default={}): Dict,
+    Optional("xqmultipole", default={}): dict,
 
-    Optional("xtpdft", default={}): Dict,
+    Optional("xtpdft", default={}): dict,
 
-    Optional("xtpdft_pair", default={}): Dict,
+    Optional("xtpdft_pair", default={}): dict,
 
-    Optional("xtpdft_qmmm", default={}): Dict,
+    Optional("xtpdft_qmmm", default={}): dict,
 })
 
 
@@ -123,13 +122,13 @@ schema_transport = Schema({
     "qc_files": exists,
 
     # number of xqmultipole jobs to run. If [] run all
-    Optional("xqmultipole_jobs", default=[]): List,
+    Optional("xqmultipole_jobs", default=[]): list,
 
     # number of eqm jobs to run. If [] run all
-    Optional("eqm_jobs", default=[]): List,
+    Optional("eqm_jobs", default=[]): list,
 
     # number of iqm jobs to run. If null run all
-    Optional("iqm_jobs", default=[]): List,
+    Optional("iqm_jobs", default=[]): list,
 
     # Change_Options options from template
     Optional("votca_calculators_options", default={}): schema_votca_calculators_options
