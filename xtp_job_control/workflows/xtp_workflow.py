@@ -97,13 +97,8 @@ def run_dftgwbse(results: Results, options: Options) -> dict:
     options.votca_calculators_options["dftgwbse"]["molecule"] = options.molecule
     options.votca_calculators_options["dftgwbse"]["mode"] = options.mode
 
-    # mbgft
-    options.votca_calculators_options["mbgft"]["dftbasis"] = options.dftbasis
-    options.votca_calculators_options["mbgft"]["gwbasis"] = options.gwbasis
-    options.votca_calculators_options["mbgft"]["vxc"] = {"functional": options.functional}
-
     # edit calculators options
-    opts = edit_calculator_options(options, ['dftgwbse', 'mbgft', 'xtpdft'])
+    opts = edit_calculator_options(options, ['dftgwbse', 'xtpdft'])
 
     cmd_dftgwbse = create_promise_command(
         "xtp_tools -e dftgwbse -o {} > dftgwbse.log", opts['dftgwbse'])
@@ -144,7 +139,7 @@ def run_eqm(results: Results, options: Options, state: PromisedObject) -> dict:
     """
     # set user-defined values
     results['job_opts_eqm'] = edit_calculator_options(
-        options, ['eqm', 'xtpdft', 'mbgft', 'esp2multipole'])
+        options, ['eqm', 'xtpdft', 'esp2multipole'])
 
     cmd_eqm_write = create_promise_command(
         "xtp_parallel -e eqm -o {} -f {} -s 0 -j write", results['job_opts_eqm']['eqm'],
