@@ -27,8 +27,5 @@ votca_calculators_options:
       dftlog:
         system_dft.orb
 
-  mbgft:
-    openmp: 4
-
   xtpdft:
     threads: 4    

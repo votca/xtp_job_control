@@ -33,9 +33,6 @@ votca_calculators_options:
   gen_cube:
     output: methane.cube
 
-  mbgft:
-    openmp: 1
-
   partialcharges:
     output: methane.mps
 
