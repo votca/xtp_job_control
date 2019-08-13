@@ -17,6 +17,6 @@ def dftgwbse_workflow(options: dict) -> object:
     output = run(results)
 
     for x in ("log", "out"):
-        shutil.copy(output['dftgwbse'][x], '.')
+        shutil.copy(output['dftgwbse'][x], options["workdir"])
 
     print("DFT GWBSE finished!!")
