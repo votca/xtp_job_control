@@ -4,7 +4,7 @@ workflow:
 mode:
   energy
   
-dftbasis:
+basisset:
   "ubecppol"
 
 gwbasis:
