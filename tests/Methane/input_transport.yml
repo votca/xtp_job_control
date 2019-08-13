@@ -48,10 +48,6 @@ votca_calculators_options:
   xtpdft:
     threads: 0
   
-  mbgft:
-    openmp: 0
-    ranges: full
-
   esp2multipole:
     openmp: 0
 

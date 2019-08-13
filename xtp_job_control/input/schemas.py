@@ -13,7 +13,7 @@ schema_votca_calculators_options = Schema({
 
     Optional(
         "eqm", default={
-            "gwbse_options": "mbgft.xml", "dftpackage": "xtpdft.xml",
+            "dftpackage": "xtpdft.xml",
             "esp_options": "esp2multipole.xml"}): dict,
 
     Optional("esp2multipole", default={}): dict,
@@ -29,8 +29,6 @@ schema_votca_calculators_options = Schema({
     Optional("kmclifetime", default={}): dict,
 
     Optional("kmcmultiple", default={}): dict,
-
-    Optional("mbgft", default={}): dict,
 
     Optional("mbgft_pair", default={}): dict,
 
@@ -86,7 +84,7 @@ schema_dftgwbse = Schema({
     Optional("functional", default="XC_HYB_GGA_XC_PBEH"): str,
 
     # Basis
-    Optional("dftbasis", default="ubecppol"): str,
+    Optional("basisset", default="ubecppol"): str,
     Optional("gwbasis", default="aux-ubecppol"): str,
 
     # path to the VOTCASHARE folder
