@@ -1,5 +1,15 @@
 # Change Log
 
+# 0.2.0
+
+### Changed
+
+* Used the [electrostatic developments](https://github.com/votca/xtp/tree/electrostatics) in the Python wrapper.
+
+### Removed
+
+* References to the `mbgft.xml` file in **GWBSE**
+
 #  0.1.0
 
 ### New
