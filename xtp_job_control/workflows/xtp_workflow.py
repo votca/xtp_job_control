@@ -473,7 +473,6 @@ def initial_config(options: Options) -> Dict:
     # Copy option files to temp file
     path_votcashare = options['path_votcashare']
     copy_tree(path_votcashare / 'xtp/xml', posix_optionfiles)
-    shutil.copy(path_votcashare / 'ctp/xml/xqmultipole.xml', posix_optionfiles)
     copy_tree(path_votcashare / 'xtp/packages', posix_optionfiles)
 
     # Copy input provided by the user to tempfolder

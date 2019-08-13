@@ -17,25 +17,14 @@ molecule:
   "tests/DFT_GWBSE/dftgwbse_CH4/methane.xyz"
 
 path_votcashare:
-  "tests/test_files/votca"
+  "/home/felipe/local/share/votca"
 
 votca_calculators_options:
   dftgwbse:
     dftpackage:
       xtpdft.xml
     gwbse_engine:
+      gwbse_options:
+        gwbse.xml
       dftlog:
         system_dft.orb
-
-  esp2multipole:
-    openmp: 1
-
-  gen_cube:
-    output: methane.cube
-
-  partialcharges:
-    output: methane.mps
-
-  xtpdft:
-    threads: 1
-

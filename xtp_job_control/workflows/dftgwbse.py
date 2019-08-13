@@ -14,9 +14,9 @@ def dftgwbse_workflow(options: dict) -> object:
     # Run DFT + GWBSE
     results['dftgwbse'] = run_dftgwbse(results, options)
 
-    # Compute partial charges
-    results['partialcharges'] = run_partialcharges(
-        results, options, promise=results["dftgwbse"]["system"])
+    # # Compute partial charges
+    # results['partialcharges'] = run_partialcharges(
+    #     results, options, promise=results["dftgwbse"]["system"])
 
     output = run(results)
     name_output = "results_dftgwbse"
