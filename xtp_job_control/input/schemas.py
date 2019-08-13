@@ -84,7 +84,7 @@ schema_dftgwbse = Schema({
     Optional("functional", default="XC_HYB_GGA_XC_PBEH"): str,
 
     # Basis
-    Optional("dftbasis", default="ubecppol"): str,
+    Optional("basisset", default="ubecppol"): str,
     Optional("gwbasis", default="aux-ubecppol"): str,
 
     # path to the VOTCASHARE folder
