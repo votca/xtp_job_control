@@ -61,7 +61,7 @@ def transport_workflow(options: dict) -> object:
     results['job_ianalyze'] = run_ianalyze(results, options, state=results['jobs_iqm']['state'])
 
     # # step qmmm
-    # results['job_qmmm'] = 
+    # results['job_qmmm'] =
     # RUN the workflow
     output = run(results)
     name_output = "results_energies"

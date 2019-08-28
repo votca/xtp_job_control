@@ -1,6 +1,6 @@
 from ..results import Results
 from ..runner import run
-from .xtp_workflow import (run_dftgwbse, run_partialcharges, write_output)
+from .xtp_workflow import run_dftgwbse
 import logging
 import shutil
 
