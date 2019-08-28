@@ -29,8 +29,10 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
+      run: |
+        pytest --cov=xtp_job_control tests
+    - name: Coverage
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
       run: |
-        pytest --cov=xtp_job_control tests
-        coverage xml && coverage report -m
+        coverage xml && python-codacy-coverage -r coverage.xml
