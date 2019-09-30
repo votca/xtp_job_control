@@ -1,0 +1,36 @@
+workflow:
+  dftgwbse
+
+mode:
+  energy
+  
+basisset:
+  "ubecppol"
+
+gwbasis:
+  "aux-ubecppol"
+  
+functional:
+  "XC_HYB_GGA_XC_PBEH"
+  
+molecule:
+  "/home/felipe/Benchmark/GPU/naphthalene/naphthalene.xyz"
+
+path_votcashare:
+  "/home/felipe/local/share/votca"
+
+votca_calculators_options:
+  threads: 1
+  orca:
+    executable:
+      "/opt/orca-4.1.0/orca"
+    options:
+      "! DFT  PBE0 TightSCF Pal8"
+  dftgwbse:
+    dftpackage:
+      orca.xml
+    gwbse_engine:
+      gwbse_options:
+        gwbse.xml
+      dftlog:
+        system.log

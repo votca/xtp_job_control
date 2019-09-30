@@ -98,10 +98,12 @@ def run_dftgwbse(results: Results, options: Options) -> dict:
     options.votca_calculators_options["dftgwbse"]["mode"] = options.mode
 
     # edit calculators options
-    opts = edit_calculator_options(options, ['dftgwbse', 'xtpdft'])
+    package = options.votca_calculators_options["dftgwbse"]["dftpackage"].split('.')[0]
+    opts = edit_calculator_options(options, ['dftgwbse', package])
 
+    threads = options.votca_calculators_options["threads"]
     cmd_dftgwbse = create_promise_command(
-        "xtp_tools -e dftgwbse -o {} > dftgwbse.log", opts['dftgwbse'])
+        "xtp_tools -e dftgwbse -t {} -o {} > dftgwbse.log", threads, opts['dftgwbse'])
 
     return call_xtp_cmd(
         cmd_dftgwbse, options.scratch_dir / "dft_gwbse", expected_output={

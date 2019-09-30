@@ -36,9 +36,13 @@ schema_votca_calculators_options = Schema({
 
     Optional("neighborlist", default={}): dict,
 
+    Optional("orca", default={}): dict,
+
     Optional("partialcharges", default={}): dict,
 
     Optional("qmmm", default={}): dict,
+
+    Optional("threads", default=1): int,
 
     Optional("xqmultipole", default={}): dict,
 
