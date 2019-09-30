@@ -9,7 +9,8 @@ schema_votca_calculators_options = Schema({
 
     Optional("bsecoupling", default={}): dict,
 
-    Optional("dftgwbse", default={"dftpackage": "xtpdft.xml"}): dict,
+    Optional("dftgwbse", default={"dftpackage": "orca.xml", "gwbse_engine":
+                                  {"gwbse_options": "gwbse.xml"}}): dict,
 
     Optional(
         "eqm", default={

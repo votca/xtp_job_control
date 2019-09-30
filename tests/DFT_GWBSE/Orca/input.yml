@@ -14,10 +14,10 @@ functional:
   "XC_HYB_GGA_XC_PBEH"
   
 molecule:
-  "/home/felipe/Benchmark/GPU/naphthalene/naphthalene.xyz"
+  "naphthalene.xyz"
 
 path_votcashare:
-  "/home/felipe/local/share/votca"
+  "/path/to/votca"
 
 votca_calculators_options:
   threads: 1
@@ -26,11 +26,3 @@ votca_calculators_options:
       "/opt/orca-4.1.0/orca"
     options:
       "! DFT  PBE0 TightSCF Pal8"
-  dftgwbse:
-    dftpackage:
-      orca.xml
-    gwbse_engine:
-      gwbse_options:
-        gwbse.xml
-      dftlog:
-        system.log
