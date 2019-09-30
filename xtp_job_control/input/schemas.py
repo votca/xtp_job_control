@@ -93,7 +93,7 @@ schema_dftgwbse = Schema({
     Optional("gwbasis", default="aux-ubecppol"): str,
 
     # path to the VOTCASHARE folder
-    "path_votcashare": exists,
+    Optional("path_votcashare", default="/usr/local/share/votca"): exists,
 
     # Change_Options options from template
     Optional("votca_calculators_options", default={}): schema_votca_calculators_options

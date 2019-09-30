@@ -45,6 +45,20 @@ def run_workflow(options: dict):
     # Merge inputs
     options.update(input_dict)
 
+    # run workflow
+    molecule = options["molecule"]
+    if molecule.is_file():
+        run_single_molecule(options)
+    else:
+        for mol in molecule.glob("*xyz"):
+            options["molecule"] = mol
+            run_single_molecule(options)
+    
+
+def run_single_molecule(options: dict):
+    """
+    Run the workflow specified by the user for a single molecule
+    """
     # Setup environment to run xtp
     options = Options(initial_config(options))
 
