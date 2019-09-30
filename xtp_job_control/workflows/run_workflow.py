@@ -4,9 +4,34 @@ from .xtp_workflow import (initial_config, recursively_create_path)
 from .transport import transport_workflow
 from .kmc import kmc_workflow
 from .dftgwbse import dftgwbse_workflow
+import argparse
+
 
 available_workflows = {
     'kmc': kmc_workflow, 'transport': transport_workflow, 'dftgwbse': dftgwbse_workflow}
+
+def cli():
+    """
+    Create command line options
+    """
+    parser = argparse.ArgumentParser()
+    # Add toil arguments to parsers
+
+    parser.add_argument(
+        "--input", help="Path to the input file (YAML format)", required=True)
+
+    parser.add_argument(
+        "--workdir", help="Working directory", default='.')
+
+    # read command line args
+    args = parser.parse_args()
+
+    return {'input_file': args.input, 'workdir': args.workdir}
+
+
+def main():
+    options = cli()
+    run_workflow(options)
 
 
 def run_workflow(options: dict):

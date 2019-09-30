@@ -22,7 +22,7 @@ setup(
     classifiers=[
         'License :: OSI Approved :: Apache Software License',
         'Intended Audience :: Science/Research',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Development Status :: 4 - Beta',
         'Topic :: Scientific/Engineering :: Chemistry'
     ],
@@ -31,6 +31,9 @@ setup(
     extras_require={
         'test': ['pytest>=4.1.0', 'pytest-cov>=2.6.1', 'coverage',
                  'codacy-coverage']},
-    scripts=[
-        'scripts/run_xtp_workflow.py']
+    entry_points={
+        'console_scripts': [
+            'run_xtp_workflow=xtp_job_control.workflows.run_workflow:cli',
+        ]
+    }
 )
