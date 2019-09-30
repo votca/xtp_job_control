@@ -2,7 +2,6 @@ from ..results import Results
 from ..runner import run
 from .xtp_workflow import run_dftgwbse
 from pathlib import Path
-import copy
 import logging
 import os
 import shutil

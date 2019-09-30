@@ -53,7 +53,7 @@ def run_workflow(options: dict):
         for mol in molecule.glob("*xyz"):
             options["molecule"] = mol
             run_single_molecule(options)
-    
+
 
 def run_single_molecule(options: dict):
     """
