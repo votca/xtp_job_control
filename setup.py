@@ -33,7 +33,7 @@ setup(
                  'codacy-coverage']},
     entry_points={
         'console_scripts': [
-            'run_xtp_workflow=xtp_job_control.workflows.run_workflow:cli',
+            'run_xtp_workflow=xtp_job_control.workflows.run_workflow:main',
         ]
     }
 )
