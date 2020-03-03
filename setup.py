@@ -1,5 +1,11 @@
-
+#!/usr/bin/env python
 from setuptools import (find_packages, setup)
+import os
+
+HERE = os.path.abspath(os.path.dirname(__file__))
+version = {}
+with open(os.path.join(HERE, 'xtp_job_control', '__version__.py')) as f:
+    exec(f.read(), version)
 
 
 def readme():
@@ -9,7 +15,7 @@ def readme():
 
 setup(
     name='xtp_job_control',
-    version='0.1.1',
+    version=version['__version__'],
     description='Workflow engine to use the VOTCA-XTP library',
     license='Apache-2.0',
     url='https://github.com/votca/xtp_job_control',
@@ -28,6 +34,11 @@ setup(
     ],
     install_requires=[
         'noodles[numpy]', 'pyyaml==5.1', 'schema'],
+    tests_require=[
+        'pytest',
+        'pytest-cov',
+        'pycodestyle',
+    ],
     extras_require={
         'test': ['pytest>=4.1.0', 'pytest-cov>=2.6.1', 'coverage',
                  'codacy-coverage']},

@@ -5,6 +5,7 @@
 ### Changed
 
 * Used the [electrostatic developments](https://github.com/votca/xtp/tree/electrostatics) in the Python wrapper.
+* Used the new  XTP [Settings](https://github.com/votca/xtp/pull/389).
 
 ### Removed
 
