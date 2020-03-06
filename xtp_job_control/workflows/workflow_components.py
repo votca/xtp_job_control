@@ -1,17 +1,20 @@
-from ..xml_editor import (
-    add_absolute_path_to_options, create_job_file, edit_xml_file,
-    edit_xml_job_file, edit_xml_options, read_available_jobs)
-from collections import defaultdict
-from functools import wraps
-from noodles import schedule
-from noodles.interface import PromisedObject
-from pathlib import Path
-from subprocess import (PIPE, Popen)
-from typing import (Callable, Dict, List)
+"""Contains the components to create a workflow."""
 import logging
 import os
 import re
 import shutil
+from collections import defaultdict
+from functools import wraps
+from pathlib import Path
+from subprocess import PIPE, Popen
+from typing import Callable, Dict, List
+
+from noodles import schedule
+from noodles.interface import PromisedObject
+
+from ..xml_editor import (add_absolute_path_to_options, create_job_file,
+                          edit_xml_file, edit_xml_job_file, edit_xml_options,
+                          read_available_jobs)
 
 # Starting logger
 logger = logging.getLogger(__name__)
@@ -20,19 +23,18 @@ logger = logging.getLogger(__name__)
 @schedule
 def call_xtp_cmd(
         cmd: str, workdir: str, expected_output: dict = None):
+    """Run a bash `cmd` in the `workdir` folder.
+
+    It searches for a list of `expected_output` files.
     """
-    Run a bash `cmd` in the `workdir` folder and search for a list of `expected_output`
-    files.
-    """
+    print("running: ", cmd)
     if not workdir.exists():
         workdir.mkdir()
     return run_command(cmd, workdir, expected_output)
 
 
 def run_command(cmd: str, workdir: str, expected_output: dict = None):
-    """
-    Run a bash command using subprocess
-    """
+    """Run a bash command using subprocess."""
     with Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, cwd=workdir.as_posix()) as p:
         rs = p.communicate()
 
@@ -125,7 +127,8 @@ def run_parallel_jobs(dict_jobs: dict, dict_input: dict) -> dict:
     results = dict_jobs.copy()
     for key, job_info in dict_jobs.items():
         input_xml = job_info[name]
-        cmd_parallel = "xtp_parallel -e {} -f {} -o {} ".format(name, state, input_xml)
+        cmd_parallel = "xtp_parallel -e {} -f {} -o {} ".format(
+            name, state, input_xml)
         # Call subprocess
         output = run_command(
             cmd_parallel + cmd_options, job_info['workdir'],
@@ -185,7 +188,8 @@ def split_eqm_calculations(input_dict: dict) -> dict:
         sections = {'job_file': config['job'].as_posix()}
 
         path_file = workdir / 'eqm.xml'
-        results[idx]['eqm'] = edit_xml_file(path_file.as_posix(), 'eqm', sections)
+        results[idx]['eqm'] = edit_xml_file(
+            path_file.as_posix(), 'eqm', sections)
     return {k: v for k, v in results.items()}
 
 
@@ -204,7 +208,8 @@ def split_iqm_calculations(input_dict: dict) -> dict:
             }
         }
         # Make a symbolic link to the or_files
-        os.symlink(input_dict['scratch_dir'] / "OR_FILES", workdir / "OR_FILES")
+        os.symlink(input_dict['scratch_dir'] /
+                   "OR_FILES", workdir / "OR_FILES")
 
         edited_files = edit_xml_options(options, workdir)
         results[idx]['iqm'] = edited_files['iqm']

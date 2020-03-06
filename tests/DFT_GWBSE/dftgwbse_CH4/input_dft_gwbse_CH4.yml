@@ -1,13 +1,19 @@
 workflow:
   dftgwbse
 
+package:
+  xtp
+
+executable:
+  "some/path"  
+
 mode:
   energy
   
 basisset:
   "ubecppol"
 
-gwbasis:
+auxbasisset:
   "aux-ubecppol"
   
 functional:
@@ -18,13 +24,3 @@ molecule:
 
 path_votcashare:
   "/home/felipe/local/share/votca"
-
-votca_calculators_options:
-  dftgwbse:
-    dftpackage:
-      xtpdft.xml
-    gwbse_engine:
-      gwbse_options:
-        gwbse.xml
-      dftlog:
-        system_dft.orb

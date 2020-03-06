@@ -1,3 +1,5 @@
+"""Module to edit the xml files."""
+
 from os.path import join
 from pathlib import Path
 from typing import (Any, Dict, List)
@@ -6,7 +8,8 @@ import xml.etree.ElementTree as ET
 
 
 def edit_xml_options(sections: dict, path_optionfiles: Path) -> Dict:
-    """
+    """Edit section in the xml files give by `sections`.
+
     Go through the `options` file: sections dictionary
     and  edit the corresponding XML file by replacing
     `sections` in the XML file.
@@ -21,10 +24,10 @@ def edit_xml_options(sections: dict, path_optionfiles: Path) -> Dict:
 
 
 def edit_xml_file(path: str, xml_file: str, sections: Dict) -> str:
-    """
-    Parse the `path` XML file and replace the nodes
-    given in `sections` in the XML tree. Finally write
-    the XML tree to the same file
+    """Parse the `path` XML file.
+
+    Replace the nodes given in `sections` in the XML tree.
+    Finally write the XML tree to the same file.
     """
     # Parse XML Tree
     tree = ET.parse(path)
@@ -65,18 +68,14 @@ def update_node(path: str, root: object, val: Any):
 
 
 def replace_regex_recursively(tree: object, regex: object, path_file: str) -> None:
-    """
-    replace a regex in all the xml tree recursively.
-    """
+    """Replace a regex in all the xml tree recursively."""
     for elem in tree.iter():
         if elem.text is not None:
             elem.text = re.sub(regex, path_file, elem.text)
 
 
 def edit_xml_job_file(path_file: str, jobs_to_run: List):
-    """
-    Read XML Containing a set of job and change status
-    """
+    """Read XML Containing a set of job and change status."""
     # Parse XML Tree
     tree = ET.parse(path_file)
     root = tree.getroot()
@@ -98,9 +97,7 @@ def edit_xml_job_file(path_file: str, jobs_to_run: List):
 
 
 def read_available_jobs(path_file: str, state: str = "AVAILABLE") -> List:
-    """
-    Search for jobs with `state`
-    """
+    """Search for jobs with `state`."""
     tree = ET.parse(path_file)
     root = tree.getroot()
 
@@ -113,9 +110,7 @@ def read_available_jobs(path_file: str, state: str = "AVAILABLE") -> List:
 
 
 def create_job_file(job: object, job_file: str):
-    """
-    Create a xml file containing the information necessary to run a job.
-    """
+    """Create a xml file containing the information necessary to run a job."""
     root = ET.Element("jobs")
     root.text = '\n\t'
     root.insert(0, job)
@@ -125,10 +120,7 @@ def create_job_file(job: object, job_file: str):
 
 
 def add_absolute_path_to_options(path_xml: str, path_optionfiles: Path) -> None:
-    """
-    Replace the relative paths to the optionfiles inside a `path_xml` file with the
-    correspoding absolute values.
-    """
+    """Replace the relative paths to the optionfiles inside a `path_xml` file."""
     names = [x.name for x in path_optionfiles.glob("*xml")]
     tree = ET.parse(path_xml)
     root = tree.getroot()

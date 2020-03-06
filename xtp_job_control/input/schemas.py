@@ -1,3 +1,4 @@
+"""Schemas to validate the user input."""
 __all__ = ["schema_dftgwbse", "schema_kmc", "schema_transport"]
 
 from os.path import exists
@@ -9,7 +10,7 @@ schema_votca_calculators_options = Schema({
 
     Optional("bsecoupling", default={}): dict,
 
-    Optional("dftgwbse", default={"dftpackage": "orca.xml", "gwbse_engine":
+    Optional("dftgwbse", default={"dftpackage": "user_input.xml", "gwbse_engine":
                                   {"gwbse_options": "gwbse.xml"}}): dict,
 
     Optional(
@@ -55,6 +56,9 @@ schema_votca_calculators_options = Schema({
 })
 
 
+CALCULATORS_DEFAULTS = schema_votca_calculators_options.validate({})
+
+
 schema_kmc = Schema({
     # Name of the workflow to run
     "workflow": And(str, Use(str.lower),
@@ -68,7 +72,7 @@ schema_kmc = Schema({
     Optional("lifetimes_file", default="lifetimes.xml"): exists,
 
     # Change_Options options from template
-    Optional("votca_calculators_options", default={}): schema_votca_calculators_options
+    Optional("votca_calculators_options", default=CALCULATORS_DEFAULTS): schema_votca_calculators_options
 
 })
 
@@ -78,6 +82,9 @@ schema_dftgwbse = Schema({
     "workflow": And(
         str, Use(str.lower), lambda s: s in ("dftgwbse")),
 
+    # DFT engine
+    Optional("package", default="xtpdft"): str,
+
     # Type of calculation
     Optional("mode", default="energy"): And(
         str, Use(str.lower), lambda s: s in ("energy", "optimize")),
@@ -85,18 +92,21 @@ schema_dftgwbse = Schema({
     # Molecular geometry:
     "molecule": exists,
 
+    # Executable
+    Optional("executable", default="/path/to/package"): str,
+
     # Functional
     Optional("functional", default="XC_HYB_GGA_XC_PBEH"): str,
 
     # Basis
     Optional("basisset", default="ubecppol"): str,
-    Optional("gwbasis", default="aux-ubecppol"): str,
+    Optional("auxbasisset", default="aux-ubecppol"): str,
 
     # path to the VOTCASHARE folder
     Optional("path_votcashare", default="/usr/local/share/votca"): exists,
 
     # Change_Options options from template
-    Optional("votca_calculators_options", default={}): schema_votca_calculators_options
+    Optional("votca_calculators_options", default=CALCULATORS_DEFAULTS): schema_votca_calculators_options
 })
 
 
@@ -134,5 +144,5 @@ schema_transport = Schema({
     Optional("iqm_jobs", default=[]): list,
 
     # Change_Options options from template
-    Optional("votca_calculators_options", default={}): schema_votca_calculators_options
+    Optional("votca_calculators_options", default=CALCULATORS_DEFAULTS): schema_votca_calculators_options
 })

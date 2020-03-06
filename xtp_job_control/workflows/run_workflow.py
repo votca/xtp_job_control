@@ -1,19 +1,20 @@
-from ..input import validate_input
-from ..results import Options
-from .xtp_workflow import (initial_config, recursively_create_path)
-from .transport import transport_workflow
-from .kmc import kmc_workflow
-from .dftgwbse import dftgwbse_workflow
+"""Module containing the command line interface."""
+
 import argparse
 
+from ..input import validate_input
+from ..results import Options
+from .dftgwbse import dftgwbse_workflow
+from .kmc import kmc_workflow
+from .transport import transport_workflow
+from .xtp_workflow import initial_config, recursively_create_path
 
 available_workflows = {
     'kmc': kmc_workflow, 'transport': transport_workflow, 'dftgwbse': dftgwbse_workflow}
 
+
 def cli():
-    """
-    Create command line options
-    """
+    """Create command line options."""
     parser = argparse.ArgumentParser()
     # Add toil arguments to parsers
 
@@ -30,21 +31,19 @@ def cli():
 
 
 def main():
+    """Run the workflow."""
     options = cli()
     run_workflow(options)
 
 
 def run_workflow(options: dict):
-    """
-    Workflow to run a complete xtp ssimulation using `options`.
-    """
+    """Workflow to run a complete xtp ssimulation using `options`."""
     # validate_input
     input_dict = recursively_create_path(
         validate_input(options['input_file']))
 
     # Merge inputs
     options.update(input_dict)
-
     # run workflow
     molecule = options["molecule"]
     if molecule.is_file():
@@ -56,9 +55,7 @@ def run_workflow(options: dict):
 
 
 def run_single_molecule(options: dict):
-    """
-    Run the workflow specified by the user for a single molecule
-    """
+    """Run the workflow specified by the user for a single molecule."""
     # Setup environment to run xtp
     options = Options(initial_config(options))
 

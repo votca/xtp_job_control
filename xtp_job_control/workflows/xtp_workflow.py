@@ -1,30 +1,33 @@
-from ..results import (Options, Results)
-from .workflow_components import (
-    call_xtp_cmd, create_promise_command,
-    edit_jobs_file, edit_options, move_results_to_workdir,
-    rename_map_file, run_parallel_jobs, split_eqm_calculations, split_iqm_calculations,
-    split_qmmm_calculations, split_xqmultipole_calculations)
-from ..xml_editor import edit_xml_file
-from distutils.dir_util import copy_tree
-from pathlib import Path
-from noodles import (lift, schedule)
-from noodles.interface import PromisedObject
-from typing import (Callable, Dict)
+"""Functions defining the xtp_votca workflows."""
 import datetime
 import logging
 import os
 import shutil
 import tempfile
+from distutils.dir_util import copy_tree
+from pathlib import Path
+from typing import Callable, Dict
+
 import yaml
+from noodles import lift, schedule
+from noodles.interface import PromisedObject
+
+from ..results import Options, Results
+from ..xml_editor import edit_xml_file
+from .workflow_components import (call_xtp_cmd, create_promise_command,
+                                  edit_jobs_file, edit_options,
+                                  move_results_to_workdir, rename_map_file,
+                                  run_parallel_jobs, split_eqm_calculations,
+                                  split_iqm_calculations,
+                                  split_qmmm_calculations,
+                                  split_xqmultipole_calculations)
 
 # Starting logger
 logger = logging.getLogger(__name__)
 
 
-def recursively_create_path(dict_input):
-    """
-    Convert all the entries of the dict_input that are file into Path objects.
-    """
+def recursively_create_path(dict_input: dict) -> dict:
+    """Convert all the entries of the dict_input that are file into Path objects."""
     for key, val in dict_input.items():
         if isinstance(val, str):
             if os.path.isdir(val) or os.path.isfile(val):
@@ -36,17 +39,13 @@ def recursively_create_path(dict_input):
 
 
 def edit_calculator_options(options: Options, sections: list) -> dict:
-    """
-    Edit the options of a calculator using the values provided by the user
-    """
+    """Edit the options of a calculator using the values provided by the user."""
     return edit_options(
         options.votca_calculators_options, sections, options.path_optionfiles)
 
 
 def edit_system_options(results: Results, options: Options) -> dict:
-    """
-    Add options provided by the user to the respective calculator configuration.
-    """
+    """Add options provided by the user to the respective calculator configuration."""
     mp_files = to_posix(options.mp_files.absolute())
     system_options = {
         'system': {
@@ -58,10 +57,30 @@ def edit_system_options(results: Results, options: Options) -> dict:
         system_options, ['system'], options.scratch_dir)
 
 
+def create_user_input(options: Options):
+    """Create the input for the dft calculation."""
+    # Add user specific input to the xtpdft engine
+    sections = ""
+    keywords = ['basisset', 'auxbasis', 'ecp']
+    for k in keywords:
+        if k in options:
+            sections += f"<{k}>{options[k]}</{k}>\n"
+
+    user_input = f"""
+<package>
+  <name>{options.package}</name>
+  <functional>{options.functional}</functional>
+  <executable>{options.executable}</executable>
+  {sections}
+</package>
+"""
+    path = options.path_optionfiles / "user_input.xml"
+    with open(path, 'w') as f:
+        f.write(user_input)
+
+
 def run_eanalyze(results: Results, options: Options, state: PromisedObject) -> Dict:
-    """
-    call eanalyze tool.
-    """
+    """Call eanalyze tool."""
     expected_output = {
         'sitecorr': "eanalyze.sitecorr*out", 'sitehist': "eanalyze.sitehist*out"}
 
@@ -74,11 +93,9 @@ def run_eanalyze(results: Results, options: Options, state: PromisedObject) -> D
 
 
 def run_ianalyze(results: Results, options: Options, state: PromisedObject) -> Dict:
-    """
-    call eanalyze tool.
-    """
+    """Call eanalyze tool."""
     expected_output = {
-            'ispatial': "ianalyze.ispatial_*.out"}
+        'ispatial': "ianalyze.ispatial_*.out"}
     path_analyze = options.path_optionfiles / "ianalyze.xml"
     cmd_eanalyze = create_promise_command(
         "xtp_run -e ianalyze -o {} -f {}", path_analyze, state)
@@ -88,9 +105,7 @@ def run_ianalyze(results: Results, options: Options, state: PromisedObject) -> D
 
 
 def run_dftgwbse(results: Results, options: Options) -> dict:
-    """
-    Running dft + gwbse, output can be found in dftgwbse.log
-    """
+    """Run dft + gwbse, output can be found in dftgwbse.log."""
     logger.info("Running dft + gwbse, output can be found in dftgwbse.log")
 
     # Add molecule, basis, functional, etc. to the calculator options
@@ -98,8 +113,8 @@ def run_dftgwbse(results: Results, options: Options) -> dict:
     options.votca_calculators_options["dftgwbse"]["mode"] = options.mode
 
     # edit calculators options
-    package = options.votca_calculators_options["dftgwbse"]["dftpackage"].split('.')[0]
-    opts = edit_calculator_options(options, ['dftgwbse', package])
+    create_user_input(options)
+    opts = edit_calculator_options(options, ['dftgwbse'])
 
     threads = options.votca_calculators_options["threads"]
     cmd_dftgwbse = create_promise_command(
@@ -112,8 +127,9 @@ def run_dftgwbse(results: Results, options: Options) -> dict:
 
 
 def run_dump(results: Results, options: Options, state: PromisedObject) -> dict:
-    """
-    output MD and QM mappings into extract.trajectory_md.pdb and extract.trajectory_qm.pdb files
+    """Output MD and QM mappings into extract.trajectory_md.pdb.
+
+    It extract.trajectory_qm.pdb files.
     """
     cmd_dump = create_promise_command(
         "xtp_dump -e trajectory2pdb -f {}", state)
@@ -124,9 +140,7 @@ def run_dump(results: Results, options: Options, state: PromisedObject) -> dict:
 
 
 def run_einternal(results: Results, options: Options, state: PromisedObject) -> dict:
-    """
-    read in reorganisation energies stored in system.xml to state.sql
-    """
+    """Read in reorganisation energies stored in system.xml to state.sql."""
     einternal_file = options.path_optionfiles / 'einternal.xml'
     cmd_einternal = create_promise_command(
         "xtp_run -e einternal -o {} -f {}", einternal_file, state)
@@ -136,10 +150,8 @@ def run_einternal(results: Results, options: Options, state: PromisedObject) -> 
 
 
 def run_eqm(results: Results, options: Options, state: PromisedObject) -> dict:
-    """
-    Run the eqm jobs.
-    """
-    # set user-defined values
+    """Run the eqm jobs."""
+    # set user-defined valuess
     results['job_opts_eqm'] = edit_calculator_options(
         options, ['eqm', 'xtpdft', 'esp2multipole'])
 
@@ -189,10 +201,10 @@ def run_iqm(results: Results, options: Options, state: PromisedObject) -> dict:
 
     # replace optionfiles with its absolute path
     sections_to_edit = {
-            '': {
-                'replace_regex_recursively':
+        '': {
+            'replace_regex_recursively':
                 ('OPTIONFILES', to_posix(options.path_optionfiles))}
-        }
+    }
 
     edited_iqm_file = schedule(edit_xml_file)(
         results['job_opts_iqm']['iqm'], 'iqm', sections_to_edit)
@@ -220,7 +232,8 @@ def run_kmcmultiple(results: Results, options: Options, state) -> dict:
     Run a kmcmultiple job
     """
 
-    results['job_opts_kmcmultiple'] = edit_calculator_options(options, ['kmcmultiple'])
+    results['job_opts_kmcmultiple'] = edit_calculator_options(options, [
+                                                              'kmcmultiple'])
 
     args = create_promise_command(
         "xtp_run -e kmcmultiple -o {} -f {}", results['job_opts_kmcmultiple']['kmcmultiple'],
@@ -240,7 +253,8 @@ def run_kmclifetime(results: Results, options: Options, state) -> dict:
     # wait_till_done(results['job_kmcmultiple'])
 
     options.votca_calculators_options["kmclifetime"]["lifetimefile"] = options.lifetimes_file
-    results['job_opts_kmclifetime'] = edit_calculator_options(options, ['kmclifetime'])
+    results['job_opts_kmclifetime'] = edit_calculator_options(options, [
+                                                              'kmclifetime'])
 
     args = create_promise_command(
         "xtp_run -e kmclifetime -o {} -f {}", results['job_opts_kmclifetime']['kmclifetime'],
@@ -254,7 +268,8 @@ def run_neighborlist(results: Results, options: Options, state: PromisedObject) 
     """
     run neighborlist calculator
     """
-    results['job_opts_neighborlist'] = edit_calculator_options(options, ['neighborlist'])
+    results['job_opts_neighborlist'] = edit_calculator_options(options, [
+                                                               'neighborlist'])
 
     cmd_neighborlist = create_promise_command(
         "xtp_run -e neighborlist -o {} -f {}",
@@ -271,13 +286,14 @@ def run_partialcharges(results: Results, options: Options, promise: PromisedObje
     """
     Compute partial charges
     """
-    opts = edit_calculator_options(options, ['esp2multipole', 'partialcharges'])
+    opts = edit_calculator_options(
+        options, ['esp2multipole', 'partialcharges'])
 
     if promise is not None:
         path_partialcharges = options.path_optionfiles / "partialcharges.xml"
         sections_to_edit = {"partialcharges": {"input": promise}}
         opts['partialcharges'] = schedule(edit_xml_file)(
-             path_partialcharges, 'options', lift(sections_to_edit))
+            path_partialcharges, 'options', lift(sections_to_edit))
 
     logger.info("Running CHELPG fit")
     args = create_promise_command(
@@ -287,9 +303,7 @@ def run_partialcharges(results: Results, options: Options, promise: PromisedObje
 
 
 def run_qmmm(results: Results, options: Options, state: PromisedObject) -> dict:
-    """
-    QM/MM calculation
-    """
+    """Run a QM/MM calculation."""
     # Copy option files
     src = ["mbgft.xml", "xtpdft.xml"]
     dst = ["mbgft_qmmm.xml", "xtpdft_qmmm.xml"]
@@ -343,9 +357,7 @@ def distribute_job(dict_input: dict, split_function: Callable) -> dict:
 
 
 def distribute_xqmultipole_jobs(results: Results, options: Options, state: PromisedObject) -> dict:
-    """
-    Run the xqmultipole_jobs independently
-    """
+    """Run the xqmultipole_jobs independently."""
     dict_input = {
         'name': 'xqmultipole',
         'scratch_dir': options.scratch_dir,
@@ -363,9 +375,7 @@ def distribute_xqmultipole_jobs(results: Results, options: Options, state: Promi
 
 
 def distribute_eqm_jobs(results: Results, options: Options, state: PromisedObject) -> dict:
-    """
-    Run the eqm job in separated folders
-    """
+    """Run the eqm job in separated folders."""
     dict_input = {
         'name': 'eqm',
         'scratch_dir': options.scratch_dir,
@@ -384,9 +394,7 @@ def distribute_eqm_jobs(results: Results, options: Options, state: PromisedObjec
 
 
 def distribute_iqm_jobs(results: Results, options: Options, state: PromisedObject) -> dict:
-    """
-    Run the iqm jobs independently
-    """
+    """Run the iqm jobs independently."""
     dict_input = {
         'name': 'iqm',
         'scratch_dir': options.scratch_dir,
@@ -443,9 +451,7 @@ def copy_option_files(optionfiles, src, dst):
 
 
 def to_posix(d):
-    """
-    convert the Path objects to string
-    """
+    """Convert the Path objects to string."""
     if isinstance(d, dict):
         for k, v in d.items():
             d[k] = to_posix(v)
@@ -459,9 +465,7 @@ def to_posix(d):
 
 
 def initial_config(options: Options) -> Dict:
-    """
-    setup to call xtp tools.
-    """
+    """Setup to call xtp tools."""
     config_logger(options['workdir'])
     ts = datetime.datetime.now().isoformat()
     scratch_dir = tempfile.gettempdir() / Path('xtp_' + str(ts))
@@ -497,9 +501,7 @@ def initial_config(options: Options) -> Dict:
 
 
 def config_logger(workdir: str):
-    """
-    Setup the logging infrasctucture.
-    """
+    """Setup the logging infrasctucture."""
     file_log = os.path.join(workdir, 'xtp.log')
     logging.basicConfig(filename=file_log, level=logging.DEBUG,
                         format='%(asctime)s---%(levelname)s\n%(message)s\n',

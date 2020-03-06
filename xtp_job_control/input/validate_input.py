@@ -1,3 +1,4 @@
+"""Validate the input files against the schema."""
 from .schemas import (schema_transport, schema_kmc, schema_dftgwbse)
 from schema import SchemaError
 from typing import Dict

@@ -1,18 +1,19 @@
-from ..results import Results
-from ..runner import run
-from .xtp_workflow import run_dftgwbse
-from pathlib import Path
+"""Workflow to perform a DFT GWBSE calculation."""
+
 import logging
 import os
 import shutil
+from pathlib import Path
+
+from ..results import Results
+from ..runner import run
+from .xtp_workflow import run_dftgwbse
 
 logger = logging.getLogger(__name__)
 
 
 def dftgwbse_workflow(options: dict):
-    """
-    Call the DFT GW-BSE workflows
-    """
+    """Call the DFT GW-BSE workflows."""
     # create results object
     results = Results({})
 
