@@ -1,24 +1,19 @@
-from os.path import join
+"""Test the input validation."""
+
 from xtp_job_control.input import validate_input
 from typing import Dict
 import yaml
 
 
 def test_input_validation(tmp_path):
-    """
-    Test the input validation
-    """
+    """Test the input validation."""
     test_file = (tmp_path / "test.yml").as_posix()
-    root = "tests/Methane"
 
     d = {
-        "workflow": "transport",
+        "workflow": "dftgwbse",
         "path_votcashare": "tests/test_files",
-        "system": join(root, "system.xml"),
-        "topology": "tests/Methane/MD_FILES/topol.tpr",
-        "trajectory":  "tests/Methane/MD_FILES/conf.gro",
-        "mp_files": "tests/Methane/MP_FILES",
-        "qc_files": "tests/Methane/QC_FILES"
+        "molecule": "tests/DFT_GWBSE/dftgwbse_CH4/methane.xyz",
+        "functional": "XC_HYB_GGA_XC_PBEH"
     }
 
     # check valid input

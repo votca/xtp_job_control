@@ -6,11 +6,10 @@ from ..input import validate_input
 from ..results import Options
 from .dftgwbse import dftgwbse_workflow
 from .kmc import kmc_workflow
-from .transport import transport_workflow
 from .xtp_workflow import initial_config, recursively_create_path
 
 available_workflows = {
-    'kmc': kmc_workflow, 'transport': transport_workflow, 'dftgwbse': dftgwbse_workflow}
+    'kmc': kmc_workflow, 'dftgwbse': dftgwbse_workflow}
 
 
 def cli():

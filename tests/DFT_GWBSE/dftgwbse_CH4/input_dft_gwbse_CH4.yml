@@ -13,7 +13,7 @@ mode:
 basisset:
   "ubecppol"
 
-auxbasisset:
+auxbasisseot:
   "aux-ubecppol"
   
 functional:

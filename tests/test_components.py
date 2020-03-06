@@ -45,21 +45,3 @@ def test_posix():
 
     assert all(isinstance(x, str) for x in to_posix(xs))
     assert all(os.path.exists(x) for x in d.values())
-
-
-@pytest.mark.skipif(sys.version_info.minor < 6, reason="python 3.6 or higher required")
-def test_initial_config_transport():
-    """
-    Check that the files are copy to a temporal workdir
-    """
-    tmp_path = tempfile.gettempdir()
-    test_file = "tests/Methane/input_transport.yml"
-    input_dict = recursively_create_path(validate_input(test_file))
-    input_dict['workdir'] = tmp_path
-
-    # Initialize data in workdir
-    new_options = initial_config(input_dict)
-    optionfiles = new_options['path_optionfiles']
-    elements = list(optionfiles.glob("*.xml"))
-
-    assert optionfiles.exists() and (len(elements) != 0)

@@ -4,9 +4,7 @@ from .xtp_workflow import (run_kmclifetime, run_kmcmultiple, write_output)
 
 
 def kmc_workflow(options: dict) -> object:
-    """
-    Run Votca kmc calculation
-    """
+    """Run Votca kmc calculation."""
     # create results object
     results = Results({})
 

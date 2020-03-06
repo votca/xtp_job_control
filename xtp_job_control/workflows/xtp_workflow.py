@@ -188,9 +188,7 @@ def run_gencube(results: Results, options: Options) -> dict:
 
 
 def run_iqm(results: Results, options: Options, state: PromisedObject) -> dict:
-    """
-    Run the eqm jobs.
-    """
+    """Run the eqm jobs."""
     # Copy option files
     src = ["mbgft.xml", "xtpdft.xml"]
     dst = ["mbgft_pair.xml", "xtpdft_pair.xml"]

@@ -1,5 +1,5 @@
 """Schemas to validate the user input."""
-__all__ = ["schema_dftgwbse", "schema_kmc", "schema_transport"]
+__all__ = ["schema_dftgwbse", "schema_kmc"]
 
 from os.path import exists
 from schema import (And, Optional, Schema, Use)
@@ -15,7 +15,7 @@ schema_votca_calculators_options = Schema({
 
     Optional(
         "eqm", default={
-            "dftpackage": "xtpdft.xml",
+            "dftpackage": "user_input.xml",
             "esp_options": "esp2multipole.xml"}): dict,
 
     Optional("esp2multipole", default={}): dict,
@@ -104,44 +104,6 @@ schema_dftgwbse = Schema({
 
     # path to the VOTCASHARE folder
     Optional("path_votcashare", default="/usr/local/share/votca"): exists,
-
-    # Change_Options options from template
-    Optional("votca_calculators_options", default=CALCULATORS_DEFAULTS): schema_votca_calculators_options
-})
-
-
-schema_transport = Schema({
-
-    # Name of the workflow to run
-    "workflow": And(str, Use(str.lower),
-                    lambda s: s in ("transport")),
-
-    # path to the VOTCASHARE folder
-    "path_votcashare": exists,
-
-    # path to the system description file in xml
-    "system": exists,
-
-    # path to topology file
-    "topology": exists,
-
-    # path to the trajectory file
-    "trajectory": exists,
-
-    # path to the folder containing the mp_files
-    "mp_files": exists,
-
-    # path to the folder containing the qc_files
-    "qc_files": exists,
-
-    # number of xqmultipole jobs to run. If [] run all
-    Optional("xqmultipole_jobs", default=[]): list,
-
-    # number of eqm jobs to run. If [] run all
-    Optional("eqm_jobs", default=[]): list,
-
-    # number of iqm jobs to run. If null run all
-    Optional("iqm_jobs", default=[]): list,
 
     # Change_Options options from template
     Optional("votca_calculators_options", default=CALCULATORS_DEFAULTS): schema_votca_calculators_options
